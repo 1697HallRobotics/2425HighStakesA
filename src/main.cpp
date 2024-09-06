@@ -9,13 +9,6 @@
 
 #include "vex.h"
 
-using namespace vex;
-
-// A global instance of competition
-competition Competition;
-
-// define your global instances of motors and other devices here
-
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
 /*                                                                           */
@@ -61,17 +54,20 @@ void autonomous(void) {
 void usercontrol(void) {
   // User control code here, inside the loop
   while (1) {
-    // This is the main execution loop for the user control program.
-    // Each time through the loop your program should update motor + servo
-    // values based on feedback from the joysticks.
+    float leftPower = Controller.Axis3.position();
+    float rightPower = Controller.Axis1.position();
 
-    // ........................................................................
-    // Insert user code here. This is where you use the joystick values to
-    // update your motors, etc.
-    // ........................................................................
+    if(fabsf(leftPower) <= deadzone) leftPower = 0;
+    if(fabsf(rightPower) <= deadzone) rightPower = 0;
 
-    wait(20, msec); // Sleep the task for a short amount of time to
-                    // prevent wasted resources.
+    if (leftPower != 0 || rightPower != 0) {
+        rightMotors.spin(forward, (leftPower - rightPower) * speed, pct);
+        leftMotors.spin(forward, (leftPower + rightPower) * speed, pct);
+    }
+    else {
+        leftMotors.stop(brake);
+        rightMotors.stop(brake);
+    }
   }
 }
 
