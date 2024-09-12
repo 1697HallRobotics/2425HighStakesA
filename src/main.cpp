@@ -54,8 +54,8 @@ void autonomous(void) {
 void usercontrol(void) {
   // User control code here, inside the loop
   while (1) {
-    float leftPower = Controller.Axis3.position();
-    float rightPower = Controller.Axis1.position();
+    float leftPower = Controller.Axis1.position();
+    float rightPower = Controller.Axis3.position();
 
     if(fabsf(leftPower) <= deadzone) leftPower = 0;
     if(fabsf(rightPower) <= deadzone) rightPower = 0;
@@ -63,8 +63,7 @@ void usercontrol(void) {
     if (leftPower != 0 || rightPower != 0) {
         rightMotors.spin(forward, (leftPower - rightPower) * speed, pct);
         leftMotors.spin(forward, (leftPower + rightPower) * speed, pct);
-    }
-    else {
+    } else {
         leftMotors.stop(brake);
         rightMotors.stop(brake);
     }

@@ -24,13 +24,13 @@ controller Controller = controller();
 const float deadzone = 10.1f;
 
 // The motor's base speed.
-const float speed = 1.0f;
+const float speed = 0.5f;
 
 // define your global instances of motors and other devices here
-motor leftBackMotor = motor(0);
-motor leftFrontMotor = motor(1);
-motor rightBackMotor = motor(2);
-motor rightFrontMotor = motor(3);
+motor leftBackMotor = motor(PORT6, true);
+motor leftFrontMotor = motor(PORT18, true);
+motor rightBackMotor = motor(PORT7, true);
+motor rightFrontMotor = motor(PORT5, true);
 
 motor_group leftMotors = motor_group(leftBackMotor, leftFrontMotor);
 motor_group rightMotors = motor_group(rightBackMotor, rightFrontMotor);
