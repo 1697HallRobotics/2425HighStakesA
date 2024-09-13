@@ -5,6 +5,8 @@
 #include "v5.h"
 #include "v5_vcs.h"
 
+#include "recording.h"
+
 using namespace vex;
 
 #define waitUntil(condition)                                                   \
@@ -22,6 +24,9 @@ competition Competition = competition();
 controller Controller = controller();
 // The controller's deadzone
 const float deadzone = 10.1f;
+
+// The brain
+brain Brain = brain();
 
 // The motor's base speed.
 const float speed = 0.5f;

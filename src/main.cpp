@@ -19,10 +19,14 @@
 /*  not every time that the robot is disabled.                               */
 /*---------------------------------------------------------------------------*/
 
-void pre_auton(void) {
+void pre_auton(void)
+{
 
-  // All activities that occur before the competition starts
-  // Example: clearing encoders, setting servo positions, ...
+	// All activities that occur before the competition starts
+	// Example: clearing encoders, setting servo positions, ...
+	Brain.Screen.print("Hardware threads available: %d (min required: 2)", thread::hardware_concurrency());
+	wait(2.0, sec);
+	begin_playback(string("death"), &Brain);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -35,10 +39,11 @@ void pre_auton(void) {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
-void autonomous(void) {
-  // ..........................................................................
-  // Insert autonomous user code here.
-  // ..........................................................................
+void autonomous(void)
+{
+	// ..........................................................................
+	// Insert autonomous user code here.
+	// ..........................................................................
 }
 
 /*---------------------------------------------------------------------------*/
@@ -51,38 +56,47 @@ void autonomous(void) {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
-void usercontrol(void) {
-  // User control code here, inside the loop
-  while (1) {
-    float leftPower = Controller.Axis1.position();
-    float rightPower = Controller.Axis3.position();
+void usercontrol(void)
+{
+	// User control code here, inside the loop
+	while (1)
+	{
+		float leftPower = Controller.Axis1.position();
+		float rightPower = Controller.Axis3.position();
 
-    if(fabsf(leftPower) <= deadzone) leftPower = 0;
-    if(fabsf(rightPower) <= deadzone) rightPower = 0;
+		if (fabsf(leftPower) <= deadzone)
+			leftPower = 0;
+		if (fabsf(rightPower) <= deadzone)
+			rightPower = 0;
 
-    if (leftPower != 0 || rightPower != 0) {
-        rightMotors.spin(forward, (leftPower - rightPower) * speed, pct);
-        leftMotors.spin(forward, (leftPower + rightPower) * speed, pct);
-    } else {
-        leftMotors.stop(brake);
-        rightMotors.stop(brake);
-    }
-  }
+		if (leftPower != 0 || rightPower != 0)
+		{
+			rightMotors.spin(fwd, (leftPower - rightPower) * speed, pct);
+			leftMotors.spin(fwd, (leftPower + rightPower) * speed, pct);
+		}
+		else
+		{
+			leftMotors.stop(brake);
+			rightMotors.stop(brake);
+		}
+	}
 }
 
 //
 // Main will set up the competition functions and callbacks.
 //
-int main() {
-  // Set up callbacks for autonomous and driver control periods.
-  Competition.autonomous(autonomous);
-  Competition.drivercontrol(usercontrol);
+int main()
+{
+	// Set up callbacks for autonomous and driver control periods.
+	Competition.autonomous(autonomous);
+	Competition.drivercontrol(usercontrol);
 
-  // Run the pre-autonomous function.
-  pre_auton();
+	// Run the pre-autonomous function.
+	pre_auton();
 
-  // Prevent main from exiting with an infinite loop.
-  while (true) {
-    wait(200, msec);
-  }
+	// Prevent main from exiting with an infinite loop.
+	while (true)
+	{
+		wait(5, msec);
+	}
 }

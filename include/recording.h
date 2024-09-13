@@ -4,11 +4,13 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <chrono>
 
 #include "v5.h"
 #include "v5_vcs.h"
 
 using namespace std;
+using namespace chrono;
 
 struct ControllerData
 {
@@ -16,9 +18,20 @@ struct ControllerData
 
     int digital[12];
 };
+struct EventData
+{
+    bool axis[4];
 
-string active_recording_filename;
+    bool digital[12];
+};
 
-vector<ControllerData> recording_buffer;
+static string active_recording_filename;
 
-vector<ControllerData> playback_buffer;
+static vex::brain* record_brain;
+
+static vector<ControllerData> recording_buffer;
+
+static vector<ControllerData> playback_buffer;
+
+void begin_playback(string filename, vex::brain* brain);
+void playback_thread(void);
