@@ -66,6 +66,7 @@ void begin_playback(string filename, vex::brain* brain)
 
 void playback_thread(void)
 {
+    vex::this_thread::sleep_for(500);
     auto invFpsLimit = chrono::duration_cast<chrono::system_clock::duration>(chrono::duration<double>{1.0/60.0});
     auto m_BeginFrame = chrono::system_clock::now();
     auto m_EndFrame = m_BeginFrame + invFpsLimit;
@@ -77,7 +78,7 @@ void playback_thread(void)
 
     while (true)
     {
-        // Do drawing work ...
+        // Save the data to the recording buffer
         record_brain->Screen.printAt(0, 40, "%lu frames per second", frame_count_per_second);
 
         // This part is just measuring if we're keeping the frame rate.
@@ -86,6 +87,7 @@ void playback_thread(void)
         ++frame_count_per_second;
         if (time_in_seconds > prev_time_in_seconds)
         {
+            // Flush the data to the file system to save RAM
             record_brain->Screen.clearScreen();
             record_brain->Screen.printAt(0, 20, "%lu bytes total (est.)", estimatedBytes);
             frame_count_per_second = 0;
