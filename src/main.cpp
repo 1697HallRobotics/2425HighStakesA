@@ -9,6 +9,13 @@
 
 #include "vex.h"
 
+template < typename T > std::string to_string( const T& n )
+{
+    std::ostringstream stm ;
+    stm << n ;
+    return stm.str();
+}
+
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
 /*                                                                           */
@@ -25,8 +32,7 @@ void pre_auton(void)
 	// All activities that occur before the competition starts
 	// Example: clearing encoders, setting servo positions, ...
 	Brain.Screen.print("Hardware threads available: %d (min required: 2)", thread::hardware_concurrency());
-	wait(2.0, sec);
-	begin_playback(string("death"), &Brain);
+	start_recording(string("test"), &Brain, &Controller, 90);
 }
 
 /*---------------------------------------------------------------------------*/

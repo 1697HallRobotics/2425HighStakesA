@@ -1,6 +1,8 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cmath>
+#include <string>
+#include <sstream>
 
 #include "v5.h"
 #include "v5_vcs.h"
@@ -16,6 +18,7 @@ using namespace vex;
 
 #define repeat(iterations)                                                     \
   for (int iterator = 0; iterator < iterations; iterator++
+
 
 // A global instance of competition
 competition Competition = competition();
