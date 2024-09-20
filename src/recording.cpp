@@ -8,7 +8,7 @@ void start_recording(string filename, vex::brain* brain, vex::controller* contro
         return;
     }
 
-    recording_output_stream.open(filename);
+    recording_output_stream.open(filename, ios::out | ios::trunc | ios::binary);
 
     if (!recording_output_stream.is_open())
     {
@@ -69,27 +69,28 @@ void recording_thread(void)
     auto m_EndFrame = m_BeginFrame + invFpsLimit;
     auto m_DeltaTime = chrono::high_resolution_clock::now() - m_BeginFrame;
     unsigned int frame_count_per_second = 0;
-    auto prev_time_in_nanos = chrono::time_point_cast<chrono::nanoseconds>(m_EndFrame);
+    auto prev_time_in_nanos = chrono::time_point_cast<chrono::seconds>(m_EndFrame);
 
     unsigned long long estimatedBytes = 0;
 
     while (true)
     {
         // Save the data to the recording buffer
-        recording_brain->Screen.printAt(0, 40, "%lu frames per second", frame_count_per_second);
+        recording_brain->Screen.printAt(0, 40, "%lu controller captures", recording_buffer.size());
         capture_controller();
 
         // This part is just measuring if we're keeping the frame rate.
         // It is not necessary to keep the frame rate.
         auto now = chrono::high_resolution_clock::now();
-        auto time_in_nanos = chrono::time_point_cast<chrono::nanoseconds>(now);
+        auto time_in_nanos = chrono::time_point_cast<chrono::seconds>(now);
         auto time_in_seconds = chrono::time_point_cast<chrono::seconds>(now);
         ++frame_count_per_second;
         if (time_in_nanos > prev_time_in_nanos)
         {
             // Flush the data to the file system to save RAM
             recording_brain->Screen.clearScreen();
-            recording_brain->Screen.printAt(0, 20, "%lu", (*recording_controller).Axis1.position());
+            recording_brain->Screen.printAt(0, 20, "%lu", time_in_seconds.time_since_epoch().count() - m_RecordingStartFrame.time_since_epoch().count());
+            if (time_in_seconds.time_since_epoch().count() - m_RecordingStartFrame.time_since_epoch().count() >= max_recording_time) break;
             flush_recording_buffer();
             frame_count_per_second = 0;
             prev_time_in_nanos = time_in_nanos;
@@ -102,6 +103,8 @@ void recording_thread(void)
         m_BeginFrame = m_EndFrame;
         m_EndFrame = m_BeginFrame + invFpsLimit;
     }
+
+    stop_recording();
 }
 
 void stop_recording()

@@ -32,7 +32,7 @@ void pre_auton(void)
 	// All activities that occur before the competition starts
 	// Example: clearing encoders, setting servo positions, ...
 	Brain.Screen.print("Hardware threads available: %d (min required: 2)", thread::hardware_concurrency());
-	start_recording(string("test"), &Brain, &Controller, 90);
+	start_recording(string("test"), &Brain, &Controller, 10);
 }
 
 /*---------------------------------------------------------------------------*/
