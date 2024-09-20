@@ -24,7 +24,7 @@ void start_recording(string filename, vex::brain* brain, vex::controller* contro
 
     recording_buffer = vector<ControllerData>();
 
-    brain->Screen.print("\nRecording Started!");
+    recording_output_stream << (unsigned char)maxSeconds;
 
     vex::thread thread = vex::thread(recording_thread);
     thread.detach();
@@ -63,6 +63,7 @@ void flush_recording_buffer()
 
 void recording_thread(void)
 {
+    vex::this_thread::sleep_until(chrono::time_point_cast<chrono::seconds>(chrono::high_resolution_clock::now()));
     auto invFpsLimit = chrono::duration_cast<chrono::high_resolution_clock::duration>(chrono::duration<double>{1.0/60.0});
     auto m_BeginFrame = chrono::high_resolution_clock::now();
     auto m_RecordingStartFrame = chrono::time_point_cast<chrono::seconds>(m_BeginFrame);
@@ -83,14 +84,13 @@ void recording_thread(void)
         // It is not necessary to keep the frame rate.
         auto now = chrono::high_resolution_clock::now();
         auto time_in_nanos = chrono::time_point_cast<chrono::seconds>(now);
-        auto time_in_seconds = chrono::time_point_cast<chrono::seconds>(now);
         ++frame_count_per_second;
         if (time_in_nanos > prev_time_in_nanos)
         {
             // Flush the data to the file system to save RAM
             recording_brain->Screen.clearScreen();
-            recording_brain->Screen.printAt(0, 20, "%lu", time_in_seconds.time_since_epoch().count() - m_RecordingStartFrame.time_since_epoch().count());
-            if (time_in_seconds.time_since_epoch().count() - m_RecordingStartFrame.time_since_epoch().count() >= max_recording_time) break;
+            recording_brain->Screen.printAt(0, 20, "%lu", time_in_nanos.time_since_epoch().count() - m_RecordingStartFrame.time_since_epoch().count());
+            if (time_in_nanos.time_since_epoch().count() - m_RecordingStartFrame.time_since_epoch().count() >= max_recording_time) break;
             flush_recording_buffer();
             frame_count_per_second = 0;
             prev_time_in_nanos = time_in_nanos;
@@ -112,9 +112,28 @@ void stop_recording()
     recording_output_stream.close();
 }
 
-void begin_playback(string filename, vex::brain* brain)
+virtual_controller* begin_playback(string filename, vex::brain* brain)
 {
+    virtual_controller* controller = new virtual_controller();
+    
     recording_brain = brain;
-    //vex::thread thread = vex::thread(playback_thread);
-    //thread.detach();
+
+    ifstream stream;
+    stream.open(filename, ios::in | ios::binary);
+
+    char* lengthData;
+    stream.read(lengthData, sizeof(char));
+    unsigned char recording_length = lengthData[0];
+
+
+
+    return controller;
+}
+
+int virtual_controller_axis::position() {
+    return this->position_value;
+}
+
+bool virtual_controller_digital::pressing() {
+    return this->pressing_value;
 }
