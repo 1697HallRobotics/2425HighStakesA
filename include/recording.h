@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <deque>
 #include <chrono>
 
 #include "v5.h"
@@ -14,22 +15,22 @@ using namespace chrono;
 
 struct ControllerData //Controller data
 {
-    int axis[4];
+    signed char axis[4];
 
-    int digital[12];
+    signed char digital[12];
 };
 
 class virtual_controller_axis
 {
 public:
-    char position_value = 0;
-    int position();
+    signed char position_value = 0;
+    signed int position();
 };
 
 class virtual_controller_digital
 {
 public:
-    char pressing_value = 0;
+    signed char pressing_value = 0;
     bool pressing();
 };
 
@@ -50,8 +51,11 @@ static vector<ControllerData> recording_buffer;
 static int max_recording_time;
 
 static virtual_controller* playback_controller;
-static vector<ControllerData> playback_buffer;
+static deque<ControllerData> playback_buffer;
 
 void start_recording(string filename, vex::brain* brain, vex::controller* controller, int maxSeconds);
 void recording_thread(void);
 void stop_recording();
+
+virtual_controller* begin_playback(string filename, vex::brain* brain);
+void playback_thread(void);

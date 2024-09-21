@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VRF Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+    <style>
+        #base {
+            position: absolute;
+            z-index: -9;
+        }
+
+        #ref {
+            position: absolute;
+            opacity: 50%;
+        }
+
+        #digital_right {
+            rotate: 90deg;
+        }
+
+        #digital_left {
+            rotate: -90deg;
+        }
+
+        #digital_down {
+            rotate: 180deg;
+        }
+
+        .digital {
+            position: absolute;
+            scale: 6%;
+        }
+
+        .joycon {
+            position: absolute;
+            scale: 12.5%;
+        }
+
+        #data_ui {
+            float: right;
+            width: 50%;
+        }
+
+        .hidden {
+            visibility: hidden;
+        }
+    </style>
+    <script>
+        let playback_buffer = new Array();
+
+        let update = function () {
+
+        }
+
+        window.onload = function () {
+            let input = document.getElementById("input");
+            input.addEventListener("change", () => {
+                let reader = new FileReader();
+                reader.onload = function () {
+                    let arrayBuffer = this.result, array = new Int8Array(arrayBuffer);
+                    let length = array[0];
+                    let cursor = 1;
+                    while (cursor < array.byteLength) {
+                        playback_buffer.push({
+                            "axis": [array[cursor++], array[cursor++], array[cursor++], array[cursor++]],
+                            "digital": [array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++]]
+                        });
+                    }
+                    console.log("Data says length is " + length + " seconds.");
+                    $("#controller_ui").removeClass("hidden");
+                    $("#data_ui").removeClass("hidden");
+                    $("#timeline").css("width", (length * 100) + "px");
+                    $("#timeline").attr("max", playback_buffer.length - 1);
+                    $("#progress").val("0");
+                    $("#max").text("/" + (playback_buffer.length - 1).toString());
+                    document.getElementById("timeline").oninput = function(event) {
+                        let targ = event.target.value;
+                        $("#progress").val(targ.toString());
+
+                        $("#axis1").val(playback_buffer[targ].axis[0]);
+                        $("#axis2").val(playback_buffer[targ].axis[1]);
+                        $("#axis3").val(playback_buffer[targ].axis[2]);
+                        $("#axis4").val(playback_buffer[targ].axis[3]);
+
+                        $("#button_a")    .prop("checked", playback_buffer[targ].digital[0] == 1);
+                        $("#button_b")    .prop("checked", playback_buffer[targ].digital[1] == 1);
+                        $("#button_x")    .prop("checked", playback_buffer[targ].digital[2] == 1);
+                        $("#button_y")    .prop("checked", playback_buffer[targ].digital[3] == 1);
+                        $("#button_up")   .prop("checked", playback_buffer[targ].digital[4] == 1);
+                        $("#button_right").prop("checked", playback_buffer[targ].digital[5] == 1);
+                        $("#button_down") .prop("checked", playback_buffer[targ].digital[6] == 1);
+                        $("#button_left") .prop("checked", playback_buffer[targ].digital[7] == 1);
+                        $("#button_l1")   .prop("checked", playback_buffer[targ].digital[8] == 1);
+                        $("#button_l2")   .prop("checked", playback_buffer[targ].digital[9] == 1);
+                        $("#button_r1")   .prop("checked", playback_buffer[targ].digital[10] == 1);
+                        $("#button_r2")   .prop("checked", playback_buffer[targ].digital[11] == 1);
+
+                        $("#joycon_right").css("transform", "translate(" + (playback_buffer[targ].axis[0] * 2.5) + "px," + (playback_buffer[targ].axis[1] * 2.5) + "px)")
+                        $("#joycon_left").css("transform", "translate(" + (playback_buffer[targ].axis[2] * 2.5) + "px," + (playback_buffer[targ].axis[3] * 2.5) + "px)")
+                    }
+                }
+                reader.readAsArrayBuffer(input.files[0]);
+            });
+        }
+
+    </script>
+</head>
+
+<body>
+    <label for="input">Upload .VRF File</label>
+    <input type="file" name="input" id="input" accept=".vrf">
+    <div id="data_ui" class="hidden">
+        <input type="range" id="timeline" value="0">
+        <input type="text" id="progress" value="0">
+        <p id="max" style="display: inline;">0</p>
+        <h2>Axes</h2>
+        <label for="axis1">Axis 1</label>
+        <input type="text" id="axis1" name="axis1" value="0">
+        <label for="axis2">Axis 2</label>
+        <input type="text" id="axis2" name="axis2" value="0">
+        <br>
+        <label for="axis3">Axis 3</label>
+        <input type="text" id="axis3" name="axis3" value="0">
+        <label for="axis4">Axis 4</label>
+        <input type="text" id="axis4" name="axis4" value="0">
+        <br>
+        <h2>Buttons</h2>
+        <label for="button_a">A</label>
+        <input type="checkbox" id="button_a" name="button_a">
+        <label for="button_b">B</label>
+        <input type="checkbox" id="button_b" name="button_b">
+        <label for="button_x">X</label>
+        <input type="checkbox" id="button_x" name="button_x">
+        <label for="button_y">Y</label>
+        <input type="checkbox" id="button_y" name="button_y">
+        <br>
+        <label for="button_up">Up</label>
+        <input type="checkbox" id="button_up" name="button_up">
+        <label for="button_down">Down</label>
+        <input type="checkbox" id="button_down" name="button_down">
+        <label for="button_left">Left</label>
+        <input type="checkbox" id="button_left" name="button_left">
+        <label for="button_right">Right</label>
+        <input type="checkbox" id="button_right" name="button_right">
+        <br>
+        <label for="button_l1">L1</label>
+        <input type="checkbox" id="button_l1" name="button_l1">
+        <label for="button_l2">L2</label>
+        <input type="checkbox" id="button_l2" name="button_l2">
+        <label for="button_r1">R1</label>
+        <input type="checkbox" id="button_r1" name="button_r1">
+        <label for="button_r2">R2</label>
+        <input type="checkbox" id="button_r2" name="button_r2">
+        <br>
+    </div>
+
+    <div id="controller_ui" class="hidden">
+        <img src="assets/vrf_controller_bg.png" id="base" draggable="false">
+        <!--<img src="assets/controller_ref.png" id="ref">-->
+        <img src="assets/joycon.png" id="joycon_left" class="joycon noselect" style="top: -4rem; left: -12rem;"
+            draggable="false">
+        <img src="assets/joycon.png" id="joycon_right" class="joycon noselect" style="top: -4rem; left: 13rem;"
+            draggable="false">
+        <img src="assets/digital_arrow.png" id="digital_up" class="digital noselect" style="top: -0.25rem; left: -5rem;"
+            draggable="false">
+        <img src="assets/digital_arrow.png" id="digital_right" class="digital noselect"
+            style="top: 2rem; left: -2.25rem;" draggable="false">
+        <img src="assets/digital_arrow.png" id="digital_left" class="digital noselect"
+            style="top: 2rem; left: -7.75rem;" draggable="false">
+        <img src="assets/digital_arrow.png" id="digital_down" class="digital noselect" style="top: 4.5rem; left: -5rem;"
+            draggable="false">
+
+        <img src="assets/digital_a.png" id="digital_a" class="digital noselect" style="top: -0.25rem; left: 5.25rem;"
+            draggable="false">
+        <img src="assets/digital_b.png" id="digital_b" class="digital noselect" style="top: 2rem; left: 2.5rem;"
+            draggable="false">
+        <img src="assets/digital_x.png" id="digital_x" class="digital noselect" style="top: 2rem; left: 8rem;"
+            draggable="false">
+        <img src="assets/digital_y.png" id="digital_y" class="digital noselect" style="top: 4.5rem; left: 5.25rem;"
+            draggable="false">
+    </div>
+
+
+    <script>
+        $("#timeline").css("width", (20 * 49) + "px")
+
+    </script>
+</body>
+
+</html>

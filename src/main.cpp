@@ -32,7 +32,7 @@ void pre_auton(void)
 	// All activities that occur before the competition starts
 	// Example: clearing encoders, setting servo positions, ...
 	Brain.Screen.print("Hardware threads available: %d (min required: 2)", thread::hardware_concurrency());
-	start_recording(string("test2"), &Brain, &Controller, 10);
+	
 }
 
 /*---------------------------------------------------------------------------*/
@@ -89,25 +89,29 @@ void usercontrol(void)
 	}
 	*/
 	//Brain.Screen.clearScreen();
-	/*
-	while (true)
-		Brain.Screen.printAt(20, 20,   "axis1:%d    ",Controller.Axis1.position());
-		Brain.Screen.printAt(20, 40,   "axis2:%d    ",Controller.Axis2.position());
-		Brain.Screen.printAt(20, 60,   "axis3:%d    ",Controller.Axis3.position());
-		Brain.Screen.printAt(20, 80,   "axis4:%d    ",Controller.Axis4.position());
-		Brain.Screen.printAt(180, 20,  "up: %d",      Controller.ButtonUp.pressing());
-		Brain.Screen.printAt(180, 40,  "down:%d",     Controller.ButtonDown.pressing());
-		Brain.Screen.printAt(180, 60,  "left:%d",     Controller.ButtonLeft.pressing());
-		Brain.Screen.printAt(180, 80,  "right:%d",    Controller.ButtonRight.pressing());
-		Brain.Screen.printAt(260, 20,  "A:%d",        Controller.ButtonA.pressing());
-		Brain.Screen.printAt(260, 40,  "B:%d",        Controller.ButtonB.pressing());
-		Brain.Screen.printAt(260, 60,  "X:%d",        Controller.ButtonX.pressing());
-		Brain.Screen.printAt(260, 80,  "Y:%d",        Controller.ButtonY.pressing());
-		Brain.Screen.printAt(100, 100, "L1:%d",       Controller.ButtonL1.pressing());
-		Brain.Screen.printAt(100, 120, "L2:%d",       Controller.ButtonL2.pressing());
-		Brain.Screen.printAt(100, 140, "R1:%d",       Controller.ButtonR1.pressing());
-		Brain.Screen.printAt(100, 180, "R2:%d",       Controller.ButtonR2.pressing());
-		*/
+
+	//start_recording(string("test4"), &Brain, &Controller, 20);
+	
+	virtual_controller* vcontroller = begin_playback(string("test4"), &Brain);
+	
+	while (true) {
+		Brain.Screen.printAt(20, 20,   "axis1:%d    ",(signed int)(*vcontroller).Axis1.position());
+		Brain.Screen.printAt(20, 40,   "axis2:%d    ",(signed int)(*vcontroller).Axis2.position());
+		Brain.Screen.printAt(20, 60,   "axis3:%d    ",(signed int)(*vcontroller).Axis3.position());
+		Brain.Screen.printAt(20, 80,   "axis4:%d    ",(signed int)(*vcontroller).Axis4.position());
+		Brain.Screen.printAt(180, 20,  "up:   %d",    (*vcontroller).ButtonUp.pressing());
+		Brain.Screen.printAt(180, 40,  "down: %d",    (*vcontroller).ButtonDown.pressing());
+		Brain.Screen.printAt(180, 60,  "left: %d",    (*vcontroller).ButtonLeft.pressing());
+		Brain.Screen.printAt(180, 80,  "right:%d",    (*vcontroller).ButtonRight.pressing());
+		Brain.Screen.printAt(260, 20,  "A:%d",        (*vcontroller).ButtonA.pressing());
+		Brain.Screen.printAt(260, 40,  "B:%d",        (*vcontroller).ButtonB.pressing());
+		Brain.Screen.printAt(260, 60,  "X:%d",        (*vcontroller).ButtonX.pressing());
+		Brain.Screen.printAt(260, 80,  "Y:%d",        (*vcontroller).ButtonY.pressing());
+		Brain.Screen.printAt(100, 100, "L1:%d",       (*vcontroller).ButtonL1.pressing());
+		Brain.Screen.printAt(100, 120, "L2:%d",       (*vcontroller).ButtonL2.pressing());
+		Brain.Screen.printAt(100, 140, "R1:%d",       (*vcontroller).ButtonR1.pressing());
+		Brain.Screen.printAt(100, 180, "R2:%d",       (*vcontroller).ButtonR2.pressing());
+	}
 	
 }
 
