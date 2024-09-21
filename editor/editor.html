@@ -47,13 +47,13 @@
         .hidden {
             visibility: hidden;
         }
+
+        .pressing {
+            scale: 5%;
+        }
     </style>
     <script>
         let playback_buffer = new Array();
-
-        let update = function () {
-
-        }
 
         window.onload = function () {
             let input = document.getElementById("input");
@@ -97,9 +97,22 @@
                         $("#button_l2")   .prop("checked", playback_buffer[targ].digital[9] == 1);
                         $("#button_r1")   .prop("checked", playback_buffer[targ].digital[10] == 1);
                         $("#button_r2")   .prop("checked", playback_buffer[targ].digital[11] == 1);
+                        
+                        $("#digital_a")    .toggleClass("pressing", playback_buffer[targ].digital[0] == 1);
+                        $("#digital_b")    .toggleClass("pressing", playback_buffer[targ].digital[1] == 1);
+                        $("#digital_x")    .toggleClass("pressing", playback_buffer[targ].digital[2] == 1);
+                        $("#digital_y")    .toggleClass("pressing", playback_buffer[targ].digital[3] == 1);
+                        $("#digital_up")   .toggleClass("pressing", playback_buffer[targ].digital[4] == 1);
+                        $("#digital_right").toggleClass("pressing", playback_buffer[targ].digital[5] == 1);
+                        $("#digital_down") .toggleClass("pressing", playback_buffer[targ].digital[6] == 1);
+                        $("#digital_left") .toggleClass("pressing", playback_buffer[targ].digital[7] == 1);
+                        $("#digital_l1")   .toggleClass("pressing", playback_buffer[targ].digital[8] == 1);
+                        $("#digital_l2")   .toggleClass("pressing", playback_buffer[targ].digital[9] == 1);
+                        $("#digital_r1")   .toggleClass("pressing", playback_buffer[targ].digital[10] == 1);
+                        $("#digital_r2")   .toggleClass("pressing", playback_buffer[targ].digital[11] == 1);
 
-                        $("#joycon_right").css("transform", "translate(" + (playback_buffer[targ].axis[0] * 2.5) + "px," + (playback_buffer[targ].axis[1] * 2.5) + "px)")
-                        $("#joycon_left").css("transform", "translate(" + (playback_buffer[targ].axis[2] * 2.5) + "px," + (playback_buffer[targ].axis[3] * 2.5) + "px)")
+                        $("#joycon_right").css("transform", "translate(" + (playback_buffer[targ].axis[0] * 2.5) + "px," + (playback_buffer[targ].axis[1] * -2.5) + "px)")
+                        $("#joycon_left").css("transform", "translate(" + (playback_buffer[targ].axis[2] * 2.5) + "px," + (playback_buffer[targ].axis[3] * -2.5) + "px)")
                     }
                 }
                 reader.readAsArrayBuffer(input.files[0]);
@@ -173,13 +186,13 @@
         <img src="assets/digital_arrow.png" id="digital_down" class="digital noselect" style="top: 4.5rem; left: -5rem;"
             draggable="false">
 
-        <img src="assets/digital_a.png" id="digital_a" class="digital noselect" style="top: -0.25rem; left: 5.25rem;"
+        <img src="assets/digital_a.png" id="digital_a" class="digital noselect" style="top: 2rem; left: 8rem;"
             draggable="false">
-        <img src="assets/digital_b.png" id="digital_b" class="digital noselect" style="top: 2rem; left: 2.5rem;"
+        <img src="assets/digital_b.png" id="digital_b" class="digital noselect" style="top: 4.5rem; left: 5.25rem;"
             draggable="false">
-        <img src="assets/digital_x.png" id="digital_x" class="digital noselect" style="top: 2rem; left: 8rem;"
+        <img src="assets/digital_x.png" id="digital_x" class="digital noselect" style="top: -0.25rem; left: 5.25rem;"
             draggable="false">
-        <img src="assets/digital_y.png" id="digital_y" class="digital noselect" style="top: 4.5rem; left: 5.25rem;"
+        <img src="assets/digital_y.png" id="digital_y" class="digital noselect" style="top: 2rem; left: 2.5rem;"
             draggable="false">
     </div>
 

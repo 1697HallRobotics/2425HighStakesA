@@ -90,8 +90,8 @@ void usercontrol(void)
 	*/
 	//Brain.Screen.clearScreen();
 
-	//start_recording(string("test4"), &Brain, &Controller, 20);
-	
+	start_recording(string("test5"), &Brain, &Controller, 20);
+	/*
 	virtual_controller* vcontroller = begin_playback(string("test4"), &Brain);
 	
 	while (true) {
@@ -112,7 +112,7 @@ void usercontrol(void)
 		Brain.Screen.printAt(100, 140, "R1:%d",       (*vcontroller).ButtonR1.pressing());
 		Brain.Screen.printAt(100, 180, "R2:%d",       (*vcontroller).ButtonR2.pressing());
 	}
-	
+	*/
 }
 
 //
