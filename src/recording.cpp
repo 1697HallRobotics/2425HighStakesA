@@ -4,15 +4,21 @@ void start_recording(string filename, vex::brain *brain, vex::controller *contro
 {
     if (!brain->SDcard.isInserted())
     {
-        brain->Screen.print("\nREC FAILED: NO SD CARD");
+        brain->Screen.printAt(30, 40, "\nREC FAILED: NO SD CARD");
         return;
     }
 
-    recording_output_stream.open(filename + ".vrf", ios::out | ios::trunc | ios::binary);
+    if (!controller->installed())
+    {
+        brain->Screen.printAt(30, 40, "\nREC FAILED: CONTROLLER NOT INSTALLED");
+        return;
+    }
+
+    recording_output_stream.open(filename, ios::out | ios::trunc | ios::binary);
 
     if (!recording_output_stream.is_open())
     {
-        brain->Screen.print("\nREC FAILED: STREAM OPEN FAILED");
+        brain->Screen.printAt(30, 40, "\nREC FAILED: STREAM OPEN FAILED");
         return;
     }
 
@@ -25,6 +31,8 @@ void start_recording(string filename, vex::brain *brain, vex::controller *contro
     recording_buffer = vector<ControllerData>();
 
     recording_output_stream << (unsigned char)maxSeconds;
+
+    brain->Screen.printAt(30, 40, "RECORDING STARTED");
 
     vex::thread thread = vex::thread(recording_thread);
     thread.detach();
@@ -62,7 +70,8 @@ void flush_recording_buffer()
 
 void recording_thread(void)
 {
-    vex::this_thread::sleep_until(chrono::time_point_cast<chrono::seconds>(chrono::high_resolution_clock::now()));
+
+    recording_brain->Screen.printAt(30, 80, "THREAD1");
     auto invFpsLimit = chrono::duration_cast<chrono::high_resolution_clock::duration>(chrono::duration<double>{1.0 / 60.0});
     auto m_BeginFrame = chrono::high_resolution_clock::now();
     auto m_RecordingStartFrame = chrono::time_point_cast<chrono::seconds>(m_BeginFrame);
@@ -73,8 +82,11 @@ void recording_thread(void)
 
     unsigned long long estimatedBytes = 0;
 
+    recording_brain->Screen.printAt(30, 120, "THREAD2");
+//work now or else
     while (true)
     {
+        recording_brain->Screen.printAt(30, 160, "THREAD3");
         // Save the data to the recording buffer
         recording_brain->Screen.printAt(0, 40, "%lu controller captures", recording_buffer.size());
         capture_controller();
@@ -127,12 +139,11 @@ virtual_controller *begin_playback(string filename, vex::brain *brain)
 
     while (!stream.eof())
     {
-        char* raw = new char[16];
+        char *raw = new char[16];
         stream.read(raw, 16);
         ControllerData data = {
-            {(signed char)raw[0],(signed char)raw[1],(signed char)raw[2],(signed char)raw[3]},
-            {(signed char)raw[4],(signed char)raw[5],(signed char)raw[6],(signed char)raw[7],(signed char)raw[8],(signed char)raw[9],(signed char)raw[10],(signed char)raw[11],(signed char)raw[12],(signed char)raw[13],(signed char)raw[14],(signed char)raw[15]}
-        };
+            {(signed char)raw[0], (signed char)raw[1], (signed char)raw[2], (signed char)raw[3]},
+            {(signed char)raw[4], (signed char)raw[5], (signed char)raw[6], (signed char)raw[7], (signed char)raw[8], (signed char)raw[9], (signed char)raw[10], (signed char)raw[11], (signed char)raw[12], (signed char)raw[13], (signed char)raw[14], (signed char)raw[15]}};
         playback_buffer.push_back(data);
     }
 
@@ -152,27 +163,28 @@ void playback_thread(void)
 
     while (true)
     {
-        if (playback_buffer.size() == 0) break;
+        if (playback_buffer.size() == 0)
+            break;
         // Update the virtual controller to the current controller capture
         ControllerData data = playback_buffer[0];
         playback_buffer.pop_front();
 
-        playback_controller->Axis1.position_value =       (signed int)data.axis[0];
-        playback_controller->Axis2.position_value =       (signed int)data.axis[1];
-        playback_controller->Axis3.position_value =       (signed int)data.axis[2];
-        playback_controller->Axis4.position_value =       (signed int)data.axis[3];
-        playback_controller->ButtonA.pressing_value =     (signed int)data.digital[0];
-        playback_controller->ButtonB.pressing_value =     (signed int)data.digital[1];
-        playback_controller->ButtonX.pressing_value =     (signed int)data.digital[2];
-        playback_controller->ButtonY.pressing_value =     (signed int)data.digital[3];      
-        playback_controller->ButtonUp.pressing_value =    (signed int)data.digital[4];
+        playback_controller->Axis1.position_value = (signed int)data.axis[0];
+        playback_controller->Axis2.position_value = (signed int)data.axis[1];
+        playback_controller->Axis3.position_value = (signed int)data.axis[2];
+        playback_controller->Axis4.position_value = (signed int)data.axis[3];
+        playback_controller->ButtonA.pressing_value = (signed int)data.digital[0];
+        playback_controller->ButtonB.pressing_value = (signed int)data.digital[1];
+        playback_controller->ButtonX.pressing_value = (signed int)data.digital[2];
+        playback_controller->ButtonY.pressing_value = (signed int)data.digital[3];
+        playback_controller->ButtonUp.pressing_value = (signed int)data.digital[4];
         playback_controller->ButtonRight.pressing_value = (signed int)data.digital[5];
-        playback_controller->ButtonDown.pressing_value =  (signed int)data.digital[6];
-        playback_controller->ButtonLeft.pressing_value =  (signed int)data.digital[7];
-        playback_controller->ButtonL1.pressing_value =    (signed int)data.digital[8];
-        playback_controller->ButtonL2.pressing_value =    (signed int)data.digital[9];
-        playback_controller->ButtonR1.pressing_value =    (signed int)data.digital[10];
-        playback_controller->ButtonR2.pressing_value =    (signed int)data.digital[11];
+        playback_controller->ButtonDown.pressing_value = (signed int)data.digital[6];
+        playback_controller->ButtonLeft.pressing_value = (signed int)data.digital[7];
+        playback_controller->ButtonL1.pressing_value = (signed int)data.digital[8];
+        playback_controller->ButtonL2.pressing_value = (signed int)data.digital[9];
+        playback_controller->ButtonR1.pressing_value = (signed int)data.digital[10];
+        playback_controller->ButtonR2.pressing_value = (signed int)data.digital[11];
 
         // This part keeps the tick rate.
         vex::this_thread::sleep_until(m_EndFrame);

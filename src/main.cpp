@@ -64,6 +64,7 @@ void autonomous(void)
 
 void usercontrol(void)
 {
+	//start_recording(string("rwtest1"), &Brain, &Controller, 20);
 	/*
 	// User control code here, inside the loop
 	while (1)
@@ -86,13 +87,15 @@ void usercontrol(void)
 			leftMotors.stop(brake);
 			rightMotors.stop(brake);
 		}
+		this_thread::sleep_for(5);
 	}
 	*/
+
 	//Brain.Screen.clearScreen();
 
-	start_recording(string("test5"), &Brain, &Controller, 20);
-	/*
-	virtual_controller* vcontroller = begin_playback(string("test4"), &Brain);
+	
+	
+	virtual_controller* vcontroller = begin_playback(string("rwtest1"), &Brain);
 	
 	while (true) {
 		Brain.Screen.printAt(20, 20,   "axis1:%d    ",(signed int)(*vcontroller).Axis1.position());
@@ -111,8 +114,28 @@ void usercontrol(void)
 		Brain.Screen.printAt(100, 120, "L2:%d",       (*vcontroller).ButtonL2.pressing());
 		Brain.Screen.printAt(100, 140, "R1:%d",       (*vcontroller).ButtonR1.pressing());
 		Brain.Screen.printAt(100, 180, "R2:%d",       (*vcontroller).ButtonR2.pressing());
+
+		float leftPower = (*vcontroller).Axis1.position();
+		float rightPower = (*vcontroller).Axis3.position();
+
+		if (fabsf(leftPower) <= deadzone)
+			leftPower = 0;
+		if (fabsf(rightPower) <= deadzone)
+			rightPower = 0;
+
+		if (leftPower != 0 || rightPower != 0)
+		{
+			rightMotors.spin(fwd, (leftPower - rightPower) * speed, pct);
+			leftMotors.spin(fwd, (leftPower + rightPower) * speed, pct);
+		}
+		else
+		{
+			leftMotors.stop(brake);
+			rightMotors.stop(brake);
+		}
+		this_thread::sleep_for(5);
 	}
-	*/
+	
 }
 
 //

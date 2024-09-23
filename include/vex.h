@@ -35,10 +35,10 @@ brain Brain = brain();
 const float speed = 0.5f;
 
 // define your global instances of motors and other devices here
-motor leftBackMotor = motor(PORT6, true);
-motor leftFrontMotor = motor(PORT18, true);
-motor rightBackMotor = motor(PORT7, true);
-motor rightFrontMotor = motor(PORT5, true);
+motor leftBackMotor = motor(PORT20, true);
+motor leftFrontMotor = motor(PORT11, true);
+motor rightBackMotor = motor(PORT10, true);
+motor rightFrontMotor = motor(PORT1, true);
 
 motor_group leftMotors = motor_group(leftBackMotor, leftFrontMotor);
 motor_group rightMotors = motor_group(rightBackMotor, rightFrontMotor);
