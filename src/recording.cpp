@@ -130,6 +130,12 @@ virtual_controller *begin_playback(string filename, vex::brain *brain)
 
     recording_brain = brain;
 
+    if (!brain->SDcard.isInserted())
+    {
+        brain->Screen.printAt(30, 40, "\nPLAYBACK FAILED: NO SD CARD");
+        return;
+    }
+
     ifstream stream;
     stream.open(filename, ios::in | ios::binary);
 
