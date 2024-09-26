@@ -64,8 +64,9 @@ void autonomous(void)
 
 void usercontrol(void)
 {
-	//start_recording(string("rwtest1"), &Brain, &Controller, 20);
 	/*
+	start_recording(string("lucastest1"), &Brain, &Controller, 20);
+	
 	// User control code here, inside the loop
 	while (1)
 	{
@@ -87,34 +88,16 @@ void usercontrol(void)
 			leftMotors.stop(brake);
 			rightMotors.stop(brake);
 		}
-		this_thread::sleep_for(5);
 	}
 	*/
 
-	//Brain.Screen.clearScreen();
+	
+	
+	virtual_controller* vcontroller = begin_playback(string("lucastest1"), &Brain);
 
-	
-	
-	virtual_controller* vcontroller = begin_playback(string("rwtest1"), &Brain);
+	if (vcontroller == nullptr) return;
 	
 	while (true) {
-		Brain.Screen.printAt(20, 20,   "axis1:%d    ",(signed int)(*vcontroller).Axis1.position());
-		Brain.Screen.printAt(20, 40,   "axis2:%d    ",(signed int)(*vcontroller).Axis2.position());
-		Brain.Screen.printAt(20, 60,   "axis3:%d    ",(signed int)(*vcontroller).Axis3.position());
-		Brain.Screen.printAt(20, 80,   "axis4:%d    ",(signed int)(*vcontroller).Axis4.position());
-		Brain.Screen.printAt(180, 20,  "up:   %d",    (*vcontroller).ButtonUp.pressing());
-		Brain.Screen.printAt(180, 40,  "down: %d",    (*vcontroller).ButtonDown.pressing());
-		Brain.Screen.printAt(180, 60,  "left: %d",    (*vcontroller).ButtonLeft.pressing());
-		Brain.Screen.printAt(180, 80,  "right:%d",    (*vcontroller).ButtonRight.pressing());
-		Brain.Screen.printAt(260, 20,  "A:%d",        (*vcontroller).ButtonA.pressing());
-		Brain.Screen.printAt(260, 40,  "B:%d",        (*vcontroller).ButtonB.pressing());
-		Brain.Screen.printAt(260, 60,  "X:%d",        (*vcontroller).ButtonX.pressing());
-		Brain.Screen.printAt(260, 80,  "Y:%d",        (*vcontroller).ButtonY.pressing());
-		Brain.Screen.printAt(100, 100, "L1:%d",       (*vcontroller).ButtonL1.pressing());
-		Brain.Screen.printAt(100, 120, "L2:%d",       (*vcontroller).ButtonL2.pressing());
-		Brain.Screen.printAt(100, 140, "R1:%d",       (*vcontroller).ButtonR1.pressing());
-		Brain.Screen.printAt(100, 180, "R2:%d",       (*vcontroller).ButtonR2.pressing());
-
 		float leftPower = (*vcontroller).Axis1.position();
 		float rightPower = (*vcontroller).Axis3.position();
 
@@ -133,8 +116,8 @@ void usercontrol(void)
 			leftMotors.stop(brake);
 			rightMotors.stop(brake);
 		}
-		this_thread::sleep_for(5);
 	}
+	
 	
 }
 

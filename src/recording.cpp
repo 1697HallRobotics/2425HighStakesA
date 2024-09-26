@@ -133,7 +133,7 @@ virtual_controller *begin_playback(string filename, vex::brain *brain)
     if (!brain->SDcard.isInserted())
     {
         brain->Screen.printAt(30, 40, "\nPLAYBACK FAILED: NO SD CARD");
-        return;
+        return nullptr;
     }
 
     ifstream stream;
@@ -167,10 +167,15 @@ void playback_thread(void)
     auto m_EndFrame = m_BeginFrame + invFpsLimit;
     auto m_DeltaTime = chrono::high_resolution_clock::now() - m_BeginFrame;
 
+    recording_brain->Screen.printAt(30, 120, "THREAD2");
+
     while (true)
     {
-        if (playback_buffer.size() == 0)
+        recording_brain->Screen.printAt(30, 160, "THREAD3");
+        if (playback_buffer.size() == 0) {
+            recording_brain->Screen.printAt(30, 200, "END");
             break;
+        }
         // Update the virtual controller to the current controller capture
         ControllerData data = playback_buffer[0];
         playback_buffer.pop_front();
