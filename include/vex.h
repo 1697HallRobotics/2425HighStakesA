@@ -32,13 +32,13 @@ const float deadzone = 10.1f;
 brain Brain = brain();
 
 // The motor's base speed.
-const float speed = 0.5f;
+const float speed = 1.0f;
 
 // define your global instances of motors and other devices here
-motor leftBackMotor = motor(PORT20, true);
-motor leftFrontMotor = motor(PORT11, true);
-motor rightBackMotor = motor(PORT10, true);
-motor rightFrontMotor = motor(PORT1, true);
+motor leftBackMotor = motor(PORT2, false);
+motor leftFrontMotor = motor(PORT5, false);
+motor rightBackMotor = motor(PORT4, false);
+motor rightFrontMotor = motor(PORT3, false);
 
 motor_group leftMotors = motor_group(leftBackMotor, leftFrontMotor);
 motor_group rightMotors = motor_group(rightBackMotor, rightFrontMotor);
