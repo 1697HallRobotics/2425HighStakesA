@@ -1,0 +1,44 @@
+#base {
+    position: absolute;
+    z-index: -9;
+}
+
+#ref {
+    position: absolute;
+    opacity: 50%;
+}
+
+#digital_right {
+    rotate: 90deg;
+}
+
+#digital_left {
+    rotate: -90deg;
+}
+
+#digital_down {
+    rotate: 180deg;
+}
+
+.digital {
+    position: absolute;
+    scale: 6%;
+}
+
+.joycon {
+    position: absolute;
+    scale: 12.5%;
+}
+
+#data_ui {
+    float: right;
+    width: 50%;
+}
+
+.hidden {
+    visibility: hidden;
+}
+
+.pressing {
+    scale: 5%;
+}
