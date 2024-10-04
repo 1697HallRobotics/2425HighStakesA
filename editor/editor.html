@@ -61,7 +61,10 @@
         <input type="checkbox" id="button_r2" name="button_r2">
         <br>
         <h2>Editing things</h2>
-        <button>Save Changes</button>
+        <button id="adv1" onclick="add_cursor(1)">Advance one frame</button>
+        <button id="rev1" onclick="add_cursor(-1)">Go back one frame</button>
+        <br>
+        <button onclick="save()">Save Changes</button>
         <button>Revert ALL Changes since file open</button>
         <br>
         <h2>Debug</h2>

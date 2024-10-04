@@ -1,4 +1,4 @@
-let playback_buffer = new Array(), orignal_playback_buffer = new Array();
+let playback_buffer = new Array(), original_playback_buffer = new Array();
 
 let undo_stack = new Array();
 let redo_stack = new Array();
@@ -7,7 +7,54 @@ let stopNextTick = false;
 let isRunning = false;
 let frameCount = 0;
 let playback_cursor = 0;
-let fps = 0, fpsInterval = 0, startTime = 0, now = 0, then = 0, elapsed = 0;
+let fps = 0, fpsInterval = 0, startTime = 0, now = 0, then = 0, elapsed = 0, recordingLength = 0;
+
+function resetBuffer() {
+    playback_buffer = structuredClone(original_playback_buffer);
+    playback_cursor = 0;
+    update_ui(playback_cursor);
+}
+
+function save() {
+    let serialized_buffer = new Uint8Array(1 + playback_buffer.length * 16);
+    let i = 0;
+    serialized_buffer[i++] = recordingLength;
+    playback_buffer.forEach(controllerData => {
+        serialized_buffer[i++] = controllerData.axis[0];
+        serialized_buffer[i++] = controllerData.axis[2];
+        serialized_buffer[i++] = controllerData.axis[3];
+        serialized_buffer[i++] = controllerData.axis[1];
+        serialized_buffer[i++] = controllerData.digital[0];
+        serialized_buffer[i++] = controllerData.digital[1];
+        serialized_buffer[i++] = controllerData.digital[2];
+        serialized_buffer[i++] = controllerData.digital[3];
+        serialized_buffer[i++] = controllerData.digital[4];
+        serialized_buffer[i++] = controllerData.digital[5];
+        serialized_buffer[i++] = controllerData.digital[6];
+        serialized_buffer[i++] = controllerData.digital[7];
+        serialized_buffer[i++] = controllerData.digital[8];
+        serialized_buffer[i++] = controllerData.digital[9];
+        serialized_buffer[i++] = controllerData.digital[10];
+        serialized_buffer[i++] = controllerData.digital[11];
+    });
+
+    let a = document.createElement("a");
+    document.body.appendChild(a);
+    a.style = "display: none";
+    console.log(serialized_buffer)
+    let blob = new Blob(serialized_buffer, {type: "octet/stream"});
+    let url = window.URL.createObjectURL(blob);
+    a.href = url;
+    a.download = document.getElementById("input").files[0].name;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+function add_cursor(idx) {
+    playback_cursor += idx;
+    update_ui(playback_cursor);
+    $("#timeline").val(playback_cursor.toString());
+}
 
 function stop_playback() {
     if (isRunning) {
@@ -57,6 +104,8 @@ function update_ui(idx) {
 }
 
 function begin_playback(start_pos = 0) {
+    if (isRunning) return;
+    if (playback_cursor == playback_buffer.length - 1) start_pos = 0;
     fpsInterval = 1000 / 60;
     playback_cursor = start_pos;
     then = window.performance.now();
@@ -96,8 +145,8 @@ function tickPlayback() {
 }
 
 function saveToBuffer(section, idx, data) {
-    console.log("changing " + idx + " " + section + " to " + data);
     playback_buffer[playback_cursor][section][idx] = data;
+    update_ui(playback_cursor);
 }
 
 window.onload = function () {
@@ -111,6 +160,7 @@ window.onload = function () {
             let arrayBuffer = this.result, array = new Int8Array(arrayBuffer);
             let cursor = 0;
             let length = array[cursor++];
+            recordingLength = length;
             while (cursor < array.byteLength) {
                 playback_buffer.push({
                     "axis": [array[cursor++], array[cursor++], array[cursor++], array[cursor++]],
@@ -129,7 +179,8 @@ window.onload = function () {
             $("#progress").val("0");
             $("#max").text("/" + (playback_buffer.length - 1).toString());
             document.getElementById("timeline").oninput = function (event) {
-                update_ui(event.target.value);
+                playback_cursor = Number(event.target.value);
+                update_ui(playback_cursor);
             }
         }
         reader.readAsArrayBuffer(input.files[0]);
