@@ -1,7 +1,11 @@
+const {Tween, Easing, Group} = TWEEN
+
 let playback_buffer = new Array(), original_playback_buffer = new Array();
 
 let undo_stack = new Array();
 let redo_stack = new Array();
+
+let tweens = new Array();
 
 let stopNextTick = false;
 let isRunning = false;
@@ -9,6 +13,25 @@ let frameCount = 0;
 let playback_cursor = 0;
 let previous_position = 0;
 let fps = 0, fpsInterval = 0, startTime = 0, now = 0, then = 0, elapsed = 0, recordingLength = 0;
+
+let coords = {x: -50, y: -50};
+let alpha = {val: 0};
+
+function duplicate_action() {
+    let amount = Number(document.getElementById("duplication_captures").value);
+    let recent_action = undo_stack[undo_stack.length - 1];
+    if (recent_action.action != "update_buffer") return;
+    for (let i = 1; i <= amount; i++) {
+        playback_buffer[playback_cursor + i][recent_action.common_data[0]][recent_action.common_data[1]] = recent_action.new_data[0]
+    }
+
+    update_ui(playback_cursor);
+}
+
+function add_undo_action(action) {
+    undo_stack.push(action);
+    redo_stack.length = 0;
+}
 
 function undo() {
     if (undo_stack.length == 0) return;
@@ -98,7 +121,7 @@ function save() {
 }
 
 function add_cursor(idx) {
-    undo_stack.push({
+    add_undo_action({
         "action": "move_cursor",
         "common_data": [],
         "old_data": [Number(playback_cursor)],
@@ -117,7 +140,7 @@ function stop_playback() {
 
 function update_ui(idx) {
     $("#progress").val(idx.toString());
-    $("#timeline").val(playback_cursor.toString());
+    $("#timeline").val(idx.toString());
 
     $("#axis1").val(playback_buffer[idx].axis[0]);
     $("#axis2").val(playback_buffer[idx].axis[1]);
@@ -202,8 +225,8 @@ function tickPlayback() {
 }
 
 function saveToBuffer(section, idx, data) {
-    let newValue = section === "axis" ? data : (data == "on" ? 1 : 0);
-    undo_stack.push({
+    let newValue = section === "axis" ? data : (data ? 1 : 0);
+    add_undo_action({
         "action": "update_buffer",
         "common_data": [section, idx],
         "old_data": [playback_buffer[playback_cursor][section][idx]],
@@ -215,10 +238,28 @@ function saveToBuffer(section, idx, data) {
     update_ui(playback_cursor);
 }
 
+function animate(time) {
+    tweens.forEach((val) => {
+        val.update(time)
+    })
+    requestAnimationFrame(animate)
+}
+
 window.onload = function () {
     let input = document.getElementById("input");
     input.addEventListener("change", () => {
-        // clear out the array in the event of loading a 
+        // clear out the array in the event of loading a new file if one is already loaded
+        if (coords.y == -50) {
+            const tween = new Tween(coords, false).to({x: -50, y: 400 }, 1000).easing(Easing.Quadratic.InOut).onUpdate(() => {
+                document.getElementById("input_button").style.setProperty("transform", "translate(" + coords.x + "%, " + coords.y + "%)")
+            }).start();
+            const tween2 = new Tween(alpha, false).to({val: 100}, 1200).easing(Easing.Quadratic.InOut).onUpdate(() => {
+                document.getElementById("data_ui").style.setProperty("opacity", alpha.val + "%")
+                document.getElementById("controller_ui").style.setProperty("opacity", alpha.val + "%")
+            }).start();
+            tweens.push(tween);
+            tweens.push(tween2)
+        }
         playback_buffer.length = 0;
         let reader = new FileReader();
         reader.onload = function () {
@@ -256,22 +297,22 @@ window.onload = function () {
     document.getElementById("axis2")        .addEventListener("change", e => { saveToBuffer("axis",     1, e.target.value); e.target.blur() });
     document.getElementById("axis3")        .addEventListener("change", e => { saveToBuffer("axis",     2, e.target.value); e.target.blur() });
     document.getElementById("axis4")        .addEventListener("change", e => { saveToBuffer("axis",     3, e.target.value); e.target.blur() });
-    document.getElementById("button_a")     .addEventListener("change", e => { saveToBuffer("digital",  0, e.target.value); e.target.blur() });
-    document.getElementById("button_b")     .addEventListener("change", e => { saveToBuffer("digital",  1, e.target.value); e.target.blur() });
-    document.getElementById("button_x")     .addEventListener("change", e => { saveToBuffer("digital",  2, e.target.value); e.target.blur() });
-    document.getElementById("button_y")     .addEventListener("change", e => { saveToBuffer("digital",  3, e.target.value); e.target.blur() });
-    document.getElementById("button_up")    .addEventListener("change", e => { saveToBuffer("digital",  4, e.target.value); e.target.blur() });
-    document.getElementById("button_right") .addEventListener("change", e => { saveToBuffer("digital",  5, e.target.value); e.target.blur() });
-    document.getElementById("button_down")  .addEventListener("change", e => { saveToBuffer("digital",  6, e.target.value); e.target.blur() });
-    document.getElementById("button_left")  .addEventListener("change", e => { saveToBuffer("digital",  7, e.target.value); e.target.blur() });
-    document.getElementById("button_l1")    .addEventListener("change", e => { saveToBuffer("digital",  8, e.target.value); e.target.blur() });
-    document.getElementById("button_l2")    .addEventListener("change", e => { saveToBuffer("digital",  9, e.target.value); e.target.blur() });
-    document.getElementById("button_r1")    .addEventListener("change", e => { saveToBuffer("digital", 10, e.target.value); e.target.blur() });
-    document.getElementById("button_r2")    .addEventListener("change", e => { saveToBuffer("digital", 11, e.target.value); e.target.blur() });
+    document.getElementById("button_a")     .addEventListener("change", e => { saveToBuffer("digital",  0, e.target.checked); e.target.blur() });
+    document.getElementById("button_b")     .addEventListener("change", e => { saveToBuffer("digital",  1, e.target.checked); e.target.blur() });
+    document.getElementById("button_x")     .addEventListener("change", e => { saveToBuffer("digital",  2, e.target.checked); e.target.blur() });
+    document.getElementById("button_y")     .addEventListener("change", e => { saveToBuffer("digital",  3, e.target.checked); e.target.blur() });
+    document.getElementById("button_up")    .addEventListener("change", e => { saveToBuffer("digital",  4, e.target.checked); e.target.blur() });
+    document.getElementById("button_right") .addEventListener("change", e => { saveToBuffer("digital",  5, e.target.checked); e.target.blur() });
+    document.getElementById("button_down")  .addEventListener("change", e => { saveToBuffer("digital",  6, e.target.checked); e.target.blur() });
+    document.getElementById("button_left")  .addEventListener("change", e => { saveToBuffer("digital",  7, e.target.checked); e.target.blur() });
+    document.getElementById("button_l1")    .addEventListener("change", e => { saveToBuffer("digital",  8, e.target.checked); e.target.blur() });
+    document.getElementById("button_l2")    .addEventListener("change", e => { saveToBuffer("digital",  9, e.target.checked); e.target.blur() });
+    document.getElementById("button_r1")    .addEventListener("change", e => { saveToBuffer("digital", 10, e.target.checked); e.target.blur() });
+    document.getElementById("button_r2")    .addEventListener("change", e => { saveToBuffer("digital", 11, e.target.checked); e.target.blur() });
     
     document.getElementById("timeline")     .addEventListener("mouseup", e => {
         e.preventDefault();
-        undo_stack.push({
+        add_undo_action({
             "action": "move_cursor",
             "common_data": [],
             "old_data": [Number(previous_position)],
@@ -280,6 +321,8 @@ window.onload = function () {
         })
         previous_position = playback_cursor;
     })
+
+    requestAnimationFrame(animate)
 }
 
 window.onkeydown = function (evt) {
