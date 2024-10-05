@@ -16,14 +16,14 @@ function resetBuffer() {
 }
 
 function save() {
-    let serialized_buffer = new Uint8Array(1 + playback_buffer.length * 16);
+    let serialized_buffer = new Int8Array(1 + playback_buffer.length * 16);
     let i = 0;
     serialized_buffer[i++] = recordingLength;
     playback_buffer.forEach(controllerData => {
         serialized_buffer[i++] = controllerData.axis[0];
+        serialized_buffer[i++] = controllerData.axis[1];
         serialized_buffer[i++] = controllerData.axis[2];
         serialized_buffer[i++] = controllerData.axis[3];
-        serialized_buffer[i++] = controllerData.axis[1];
         serialized_buffer[i++] = controllerData.digital[0];
         serialized_buffer[i++] = controllerData.digital[1];
         serialized_buffer[i++] = controllerData.digital[2];
@@ -42,7 +42,7 @@ function save() {
     document.body.appendChild(a);
     a.style = "display: none";
     console.log(serialized_buffer)
-    let blob = new Blob(serialized_buffer, {type: "octet/stream"});
+    let blob = new Blob([serialized_buffer], {type: "octet/stream"});
     let url = window.URL.createObjectURL(blob);
     a.href = url;
     a.download = document.getElementById("input").files[0].name;
