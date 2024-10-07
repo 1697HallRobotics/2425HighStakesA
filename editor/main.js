@@ -37,8 +37,6 @@ function undo() {
     if (undo_stack.length == 0) return;
     let undo_action = undo_stack.pop();
 
-    console.log("undo");
-
     switch (undo_action.action) {
         case "update_buffer":
             playback_cursor = undo_action.cursor_position;
@@ -59,8 +57,6 @@ function undo() {
 function redo() {
     if (redo_stack.length == 0) return;
     let redo_action = redo_stack.pop();
-
-    console.log("redo");
 
     switch (redo_action.action) {
         case "update_buffer":
