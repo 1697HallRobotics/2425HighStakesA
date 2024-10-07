@@ -241,6 +241,12 @@ function saveToBuffer(section, idx, data) {
 function animate(time) {
     tweens.forEach((val) => {
         val.update(time)
+        if (!val.isPlaying()) {
+            const index = array.indexOf(val);
+            if (index > -1) { // only splice array when item is found
+              array.splice(index, 1); // 2nd parameter means remove one item only
+            }
+        }
     })
     requestAnimationFrame(animate)
 }
