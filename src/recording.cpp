@@ -1,30 +1,26 @@
 #include "recording.h"
 
-void start_recording(string filename, vex::brain *brain, vex::controller *controller, int maxSeconds)
+void start_recording(const string &filename, int maxSeconds)
 {
-    if (!brain->SDcard.isInserted())
+    if (!usd::is_installed())
     {
-        brain->Screen.printAt(30, 40, "\nREC FAILED: NO SD CARD");
+        lcd::set_text(1, "REC FAILED: NO USD");
         return;
     }
 
-    if (!controller->installed())
+    if (!controller_is_connected(E_CONTROLLER_MASTER))
     {
-        brain->Screen.printAt(30, 40, "\nREC FAILED: CONTROLLER NOT INSTALLED");
+        lcd::set_text(1, "REC FAILED: NO CONTROLLER");
         return;
     }
 
-    recording_output_stream.open(filename, ios::out | ios::trunc | ios::binary);
+    recording_output_stream.open("/usd/" + filename + ".vrf", ios::binary);
 
     if (!recording_output_stream.is_open())
     {
-        brain->Screen.printAt(30, 40, "\nREC FAILED: STREAM OPEN FAILED");
+        lcd::set_text(1, "REC FAILED: OFSTREAM BAD");
         return;
     }
-
-    recording_brain = brain;
-
-    recording_controller = controller;
 
     max_recording_time = maxSeconds;
 
@@ -32,17 +28,28 @@ void start_recording(string filename, vex::brain *brain, vex::controller *contro
 
     recording_output_stream << (unsigned char)maxSeconds;
 
-    brain->Screen.printAt(30, 40, "RECORDING STARTED");
-
-    vex::thread thread = vex::thread(recording_thread);
-    thread.detach();
+    rtos::Task recording_task(recording_thread, nullptr, TASK_PRIORITY_MAX);
 }
 
 void capture_controller()
 {
     ControllerData data = {
-        {(signed char)(*recording_controller).Axis1.position(), (signed char)(*recording_controller).Axis2.position(), (signed char)(*recording_controller).Axis3.position(), (signed char)(*recording_controller).Axis4.position()},
-        {(signed char)(*recording_controller).ButtonA.pressing(), (signed char)(*recording_controller).ButtonB.pressing(), (signed char)(*recording_controller).ButtonX.pressing(), (signed char)(*recording_controller).ButtonY.pressing(), (signed char)(*recording_controller).ButtonUp.pressing(), (signed char)(*recording_controller).ButtonRight.pressing(), (signed char)(*recording_controller).ButtonDown.pressing(), (signed char)(*recording_controller).ButtonLeft.pressing(), (signed char)(*recording_controller).ButtonL1.pressing(), (signed char)(*recording_controller).ButtonL2.pressing(), (signed char)(*recording_controller).ButtonR1.pressing(), (signed char)(*recording_controller).ButtonR2.pressing()}};
+        {(signed char)(controller_get_analog(E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_RIGHT_X)),
+         (signed char)(controller_get_analog(E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_RIGHT_Y)),
+         (signed char)(controller_get_analog(E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_LEFT_Y)),
+         (signed char)(controller_get_analog(E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_LEFT_X))},
+        {(signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_A),
+         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_B),
+         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_X),
+         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_Y),
+         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_UP),
+         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_RIGHT),
+         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_DOWN),
+         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_LEFT),
+         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_L1),
+         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_L2),
+         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_R1),
+         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_R2)}};
 
     recording_buffer.push_back(data);
 }
@@ -68,76 +75,65 @@ void flush_recording_buffer()
     recording_buffer.clear();
 }
 
-void recording_thread(void)
+void recording_thread(void *param)
 {
+    pros::lcd::set_text(2, "THREAD STARTED");
 
-    recording_brain->Screen.printAt(30, 80, "THREAD1");
-    auto invFpsLimit = chrono::duration_cast<chrono::high_resolution_clock::duration>(chrono::duration<double>{1.0 / 60.0});
-    auto m_BeginFrame = chrono::high_resolution_clock::now();
-    auto m_RecordingStartFrame = chrono::time_point_cast<chrono::seconds>(m_BeginFrame);
-    auto m_EndFrame = m_BeginFrame + invFpsLimit;
-    auto m_DeltaTime = chrono::high_resolution_clock::now() - m_BeginFrame;
-    unsigned int frame_count_per_second = 0;
-    auto prev_time_in_nanos = chrono::time_point_cast<chrono::seconds>(m_EndFrame);
+    uint32_t captureDelay = 15; // 15ms per capture
+
+    uint32_t m_BeginFrame = millis();
+
+    uint32_t frame_count_per_second = 0;
 
     unsigned long long estimatedBytes = 0;
 
-    recording_brain->Screen.printAt(30, 120, "THREAD2");
-//work now or else
+    uint32_t prev_millis = m_BeginFrame + captureDelay * 67;
+
+    lcd::print(3, "%lu controller captures", recording_buffer.size());
+    lcd::print(4, "%lu captures flushed to disk", frame_count_per_second);
+    lcd::print(5, "flushed %lu times", estimatedBytes);
+
     while (true)
     {
-        recording_brain->Screen.printAt(30, 160, "THREAD3");
         // Save the data to the recording buffer
-        recording_brain->Screen.printAt(0, 40, "%lu controller captures", recording_buffer.size());
+        lcd::print(3, "%lu controller captures", recording_buffer.size());
         capture_controller();
 
-        // This part is just measuring if we're keeping the frame rate.
-        // It is not necessary to keep the frame rate.
-        auto now = chrono::high_resolution_clock::now();
-        auto time_in_nanos = chrono::time_point_cast<chrono::seconds>(now);
+        uint32_t now = millis();
         ++frame_count_per_second;
-        if (time_in_nanos > prev_time_in_nanos)
+        if (now > prev_millis)
         {
             // Flush the data to the file system to save RAM
-            recording_brain->Screen.clearScreen();
-            recording_brain->Screen.printAt(0, 20, "%lu", time_in_nanos.time_since_epoch().count() - m_RecordingStartFrame.time_since_epoch().count());
-            if (time_in_nanos.time_since_epoch().count() - m_RecordingStartFrame.time_since_epoch().count() >= max_recording_time)
+            lcd::print(4, "%lu captures flushed to disk", frame_count_per_second);
+
+            if (now >= m_BeginFrame + max_recording_time * 1000)
                 break;
             flush_recording_buffer();
             frame_count_per_second = 0;
-            prev_time_in_nanos = time_in_nanos;
-            estimatedBytes += 12ull;
+            prev_millis = now + captureDelay * 67;
+            estimatedBytes++;
+            lcd::print(5, "flushed %lu times", estimatedBytes);
         }
 
         // This part keeps the frame rate.
-        vex::this_thread::sleep_until(m_EndFrame);
-        m_DeltaTime = chrono::high_resolution_clock::now() - m_BeginFrame;
-        m_BeginFrame = m_EndFrame;
-        m_EndFrame = m_BeginFrame + invFpsLimit;
+        task_delay_until(&now, captureDelay);
     }
 
     stop_recording();
 }
 
-void stop_recording()
-{
-    recording_output_stream.close();
-}
-
-virtual_controller *begin_playback(string filename, vex::brain *brain)
+virtual_controller *begin_playback(string filename)
 {
     playback_controller = new virtual_controller();
 
-    recording_brain = brain;
-
-    if (!brain->SDcard.isInserted())
+    if (!usd::is_installed())
     {
-        brain->Screen.printAt(30, 40, "\nPLAYBACK FAILED: NO SD CARD");
+        lcd::set_text(1, "PLAYBACK FAILED: NO USD");
         return nullptr;
     }
 
     ifstream stream;
-    stream.open(filename, ios::in | ios::binary);
+    stream.open("/usd/" + filename + ".vrf", ios::binary);
 
     char *lengthData = new char[1];
     stream.read(lengthData, sizeof(char));
@@ -153,29 +149,44 @@ virtual_controller *begin_playback(string filename, vex::brain *brain)
         playback_buffer.push_back(data);
     }
 
-    vex::thread thread(playback_thread);
-    thread.detach();
+    rtos::Task playback_task(playback_thread, nullptr, TASK_PRIORITY_MAX);
 
     return playback_controller;
 }
 
-void playback_thread(void)
+void playback_thread(void *param)
 {
-    vex::this_thread::sleep_until(chrono::time_point_cast<chrono::seconds>(chrono::high_resolution_clock::now()));
-    auto invFpsLimit = chrono::duration_cast<chrono::high_resolution_clock::duration>(chrono::duration<double>{1.0 / 60.0});
-    auto m_BeginFrame = chrono::high_resolution_clock::now();
-    auto m_EndFrame = m_BeginFrame + invFpsLimit;
-    auto m_DeltaTime = chrono::high_resolution_clock::now() - m_BeginFrame;
+    uint32_t playbackDelay = 15; // 15ms per capture
+    uint32_t m_BeginFrame = millis();
 
-    recording_brain->Screen.printAt(30, 120, "THREAD2");
-
-    while (true)
+    while (1)
     {
-        recording_brain->Screen.printAt(30, 160, "THREAD3");
-        if (playback_buffer.size() == 0) {
-            recording_brain->Screen.printAt(30, 200, "END");
+        if (playback_buffer.size() == 0)
+        {
+            lcd::set_text(7, "END");
+            // zero out everything so the robot isn't moving to infinity
+            playback_controller->Axis1.position_value = 0;
+            playback_controller->Axis2.position_value = 0;
+            playback_controller->Axis3.position_value = 0;
+            playback_controller->Axis4.position_value = 0;
+            playback_controller->ButtonA.pressing_value = 0;
+            playback_controller->ButtonB.pressing_value = 0;
+            playback_controller->ButtonX.pressing_value = 0;
+            playback_controller->ButtonY.pressing_value = 0;
+            playback_controller->ButtonUp.pressing_value = 0;
+            playback_controller->ButtonRight.pressing_value = 0;
+            playback_controller->ButtonDown.pressing_value = 0;
+            playback_controller->ButtonLeft.pressing_value = 0;
+            playback_controller->ButtonL1.pressing_value = 0;
+            playback_controller->ButtonL2.pressing_value = 0;
+            playback_controller->ButtonR1.pressing_value = 0;
+            playback_controller->ButtonR2.pressing_value = 0;
+            playback_controller->copy_old();
             break;
         }
+
+        playback_controller->copy_old();
+
         // Update the virtual controller to the current controller capture
         ControllerData data = playback_buffer[0];
         playback_buffer.pop_front();
@@ -197,11 +208,8 @@ void playback_thread(void)
         playback_controller->ButtonR1.pressing_value = (signed int)data.digital[10];
         playback_controller->ButtonR2.pressing_value = (signed int)data.digital[11];
 
-        // This part keeps the tick rate.
-        vex::this_thread::sleep_until(m_EndFrame);
-        m_DeltaTime = chrono::high_resolution_clock::now() - m_BeginFrame;
-        m_BeginFrame = m_EndFrame;
-        m_EndFrame = m_BeginFrame + invFpsLimit;
+        task_delay_until(&m_BeginFrame, playbackDelay);
+        m_BeginFrame = millis();
     }
 }
 
@@ -213,4 +221,109 @@ int virtual_controller_axis::position()
 bool virtual_controller_digital::pressing()
 {
     return this->pressing_value;
+}
+
+int32_t virtual_controller::get_analog(controller_analog_e_t channel)
+{
+    switch (channel)
+    {
+    case E_CONTROLLER_ANALOG_RIGHT_X:
+        return Axis1.position();
+    case E_CONTROLLER_ANALOG_RIGHT_Y:
+        return Axis2.position();
+    case E_CONTROLLER_ANALOG_LEFT_Y:
+        return Axis3.position();
+    case E_CONTROLLER_ANALOG_LEFT_X:
+        return Axis4.position();
+    default:
+        return 0;
+    }
+}
+
+int32_t virtual_controller::get_digital(controller_digital_e_t button)
+{
+    switch (button)
+    {
+    case E_CONTROLLER_DIGITAL_A:
+        return ButtonA.pressing();
+    case E_CONTROLLER_DIGITAL_B:
+        return ButtonB.pressing();
+    case E_CONTROLLER_DIGITAL_X:
+        return ButtonX.pressing();
+    case E_CONTROLLER_DIGITAL_Y:
+        return ButtonY.pressing();
+    case E_CONTROLLER_DIGITAL_UP:
+        return ButtonUp.pressing();
+    case E_CONTROLLER_DIGITAL_DOWN:
+        return ButtonDown.pressing();
+    case E_CONTROLLER_DIGITAL_LEFT:
+        return ButtonLeft.pressing();
+    case E_CONTROLLER_DIGITAL_RIGHT:
+        return ButtonRight.pressing();
+    case E_CONTROLLER_DIGITAL_L1:
+        return ButtonL1.pressing();
+    case E_CONTROLLER_DIGITAL_L2:
+        return ButtonL2.pressing();
+    case E_CONTROLLER_DIGITAL_R1:
+        return ButtonR1.pressing();
+    case E_CONTROLLER_DIGITAL_R2:
+        return ButtonR2.pressing();
+    default:
+        return 0;
+    }
+}
+
+int32_t virtual_controller::get_digital_new_press(controller_digital_e_t button)
+{
+    switch (button)
+    {
+    case E_CONTROLLER_DIGITAL_A:
+        return ButtonA.pressing() && !PrevButtonA.pressing();
+    case E_CONTROLLER_DIGITAL_B:
+        return ButtonB.pressing() && !PrevButtonB.pressing();
+    case E_CONTROLLER_DIGITAL_X:
+        return ButtonX.pressing() && !PrevButtonX.pressing();
+    case E_CONTROLLER_DIGITAL_Y:
+        return ButtonY.pressing() && !PrevButtonY.pressing();
+    case E_CONTROLLER_DIGITAL_UP:
+        return ButtonUp.pressing() && !PrevButtonUp.pressing();
+    case E_CONTROLLER_DIGITAL_DOWN:
+        return ButtonDown.pressing() && !PrevButtonDown.pressing();
+    case E_CONTROLLER_DIGITAL_LEFT:
+        return ButtonLeft.pressing() && !PrevButtonLeft.pressing();
+    case E_CONTROLLER_DIGITAL_RIGHT:
+        return ButtonRight.pressing() && !PrevButtonRight.pressing();
+    case E_CONTROLLER_DIGITAL_L1:
+        return ButtonL1.pressing() && !PrevButtonL1.pressing();
+    case E_CONTROLLER_DIGITAL_L2:
+        return ButtonL2.pressing() && !PrevButtonL2.pressing();
+    case E_CONTROLLER_DIGITAL_R1:
+        return ButtonR1.pressing() && !PrevButtonR1.pressing();
+    case E_CONTROLLER_DIGITAL_R2:
+        return ButtonR2.pressing() && !PrevButtonR2.pressing();
+    default:
+        return 0;
+    }
+}
+
+void virtual_controller::copy_old()
+{
+    PrevButtonA     = ButtonA;
+    PrevButtonB     = ButtonB;
+    PrevButtonX     = ButtonX;
+    PrevButtonY     = ButtonY;
+    PrevButtonUp    = ButtonUp;
+    PrevButtonRight = ButtonRight;
+    PrevButtonDown  = ButtonDown;
+    PrevButtonLeft  = ButtonLeft;
+    PrevButtonL1    = ButtonL1;
+    PrevButtonL2    = ButtonL2;
+    PrevButtonR1    = ButtonR1;
+    PrevButtonR2    = ButtonL2;
+}
+
+void stop_recording()
+{
+    flush_recording_buffer();
+    recording_output_stream.close();
 }

@@ -107,12 +107,14 @@ function save() {
     let a = document.createElement("a");
     document.body.appendChild(a);
     a.style = "display: none";
-    console.log(serialized_buffer)
+    
     let blob = new Blob([serialized_buffer], {type: "octet/stream"});
     let url = window.URL.createObjectURL(blob);
+
     a.href = url;
     a.download = document.getElementById("input").files[0].name;
     a.click();
+
     window.URL.revokeObjectURL(url);
 }
 
@@ -124,6 +126,7 @@ function add_cursor(idx) {
         "new_data": [Number(playback_cursor) + Number(idx)],
         "cursor_position": playback_cursor
     });
+    
     playback_cursor += idx;
     update_ui(playback_cursor);
 }
@@ -175,15 +178,15 @@ function update_ui(idx) {
     $("#undostack").text(JSON.stringify(undo_stack));
     $("#redostack").text(JSON.stringify(redo_stack));
 
-    Array.from(document.getElementsByTagName("input")).forEach((item, idx) => {
+    Array.from(document.getElementsByTagName("input")).forEach(item => {
         item.blur();
-    })
+    });
 }
 
 function begin_playback(start_pos = 0) {
     if (isRunning) return;
     if (playback_cursor == playback_buffer.length - 1) start_pos = 0;
-    fpsInterval = 1000 / 60;
+    fpsInterval = 15;
     playback_cursor = start_pos;
     then = window.performance.now();
     startTime = then;
