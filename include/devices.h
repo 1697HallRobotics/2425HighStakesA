@@ -1,8 +1,3 @@
-#include <cstdlib>
-#include <cstdio>
-#include <cmath>
-#include <string>
-#include <sstream>
 #include "api.h"
 
 using namespace pros;
@@ -26,6 +21,10 @@ uint64_t RUNNING_MACROS = 0;
 #define FLAG_MACRO_ON(macro) RUNNING_MACROS |= macro
 #define FLAG_MACRO_OFF(macro) RUNNING_MACROS &= ~macro
 #define MACRO_RUNNING(macro) RUNNING_MACROS & macro
+
+#define REF_MACRO(name) macro_##name
+#define MACRO_IMPLEMENTATION(name) REF_MACRO(name)(void *param)
+#define DEFINE_MACRO(name) void MACRO_IMPLEMENTATION(name)
 
 // The controller
 Controller controller(E_CONTROLLER_MASTER);
@@ -56,4 +55,4 @@ Motor intakeMotor     (intakePort);
 MotorGroup leftMotors ({leftBackPort, leftFrontPort});
 MotorGroup rightMotors({rightBackPort, rightFrontPort});
 
-adi::Pneumatics clampPneumatics = adi::Pneumatics('b', false);
+adi::Pneumatics clampPneumatics = adi::Pneumatics('a', false);

@@ -54,6 +54,9 @@
 // using namespace okapi;
 
 #include "recording.h"
+#include "devices.h"
+
+DEFINE_MACRO(ScoreWallGoal);
 
 /**
  * Prototypes for the competition control tasks are redefined here to ensure

@@ -1,13 +1,7 @@
-#include <cstdlib>
-#include <cstdio>
-#include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 #include <deque>
-#include <chrono>
-#include <thread>
-#include <sys/unistd.h>
 
 #include "api.h"
 
@@ -16,12 +10,12 @@ using namespace chrono;
 using namespace pros;
 using namespace pros::c;
 
-struct ControllerData //Controller data
+typedef struct //Controller data
 {
     signed char axis[4];
 
     signed char digital[12];
-};
+} ControllerData;
 
 class virtual_controller_axis
 {

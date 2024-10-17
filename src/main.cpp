@@ -1,5 +1,4 @@
 #include "main.h"
-#include "devices.h"
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -26,7 +25,6 @@ void initialize()
 	clampMotor.set_zero_position(0);
 	rightMotors.set_zero_position_all(0);
 	leftMotors.set_zero_position_all(0);
-
 	intakeMotor.set_zero_position(0);
 }
 
@@ -102,7 +100,7 @@ void autonomous()
 	}
 }
 
-void Macro_ScoreWallGoal(void *param) {
+void MACRO_IMPLEMENTATION(ScoreWallGoal) {
 	if (MACRO_RUNNING(MACRO_WALLGOAL)) return;
 	FLAG_MACRO_ON(MACRO_WALLGOAL);
 
@@ -184,9 +182,11 @@ void opcontrol()
 			clampMotor.brake();
 
 		if (controller.get_digital_new_press(DIGITAL_A))
-			rtos::Task scoreWallGoalTask(Macro_ScoreWallGoal);
+			rtos::Task scoreWallGoalTask(REF_MACRO(ScoreWallGoal));
+
+		if (controller.get_digital_new_press(DIGITAL_B))
+			clampPneumatics.toggle();
 
 		task_delay(1);
-		// i say let the kernel starve i need precision
 	}
 }

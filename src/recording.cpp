@@ -41,22 +41,27 @@ void start_recording(const string &filename, int length)
 void capture_controller()
 {
     ControllerData data = {
-        {(int8_t) controller_get_analog (E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_RIGHT_X),
-         (int8_t) controller_get_analog (E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_RIGHT_Y),
-         (int8_t) controller_get_analog (E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_LEFT_Y),
-         (int8_t) controller_get_analog (E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_LEFT_X)},
-        {(int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_A),
-         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_B),
-         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_X),
-         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_Y),
-         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_UP),
-         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_RIGHT),
-         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_DOWN),
-         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_LEFT),
-         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_L1),
-         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_L2),
-         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_R1),
-         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_R2)}};
+        {
+        (int8_t) controller_get_analog (E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_RIGHT_X),
+        (int8_t) controller_get_analog (E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_RIGHT_Y),
+        (int8_t) controller_get_analog (E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_LEFT_Y),
+        (int8_t) controller_get_analog (E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_LEFT_X)
+        },
+        {
+        (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_A),
+        (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_B),
+        (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_X),
+        (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_Y),
+        (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_UP),
+        (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_RIGHT),
+        (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_DOWN),
+        (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_LEFT),
+        (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_L1),
+        (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_L2),
+        (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_R1),
+        (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_R2)
+        }
+    };
 
     recording_buffer.push_back(data);
 }
