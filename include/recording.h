@@ -40,6 +40,7 @@ public:
 class virtual_controller
 {
 public:
+    // this provides support for both vexcode and pros implementations
     virtual_controller_digital PrevButtonA, PrevButtonB, PrevButtonX, PrevButtonY, PrevButtonUp, PrevButtonDown, PrevButtonLeft, PrevButtonRight, PrevButtonL1, PrevButtonL2, PrevButtonR1, PrevButtonR2;
 
     virtual_controller_axis Axis1, Axis2, Axis3, Axis4;
@@ -51,18 +52,42 @@ public:
     int32_t get_digital_new_press(controller_digital_e_t button);
 };
 
-static string active_recording_filename;
-
+// the current recording stream
 static ofstream recording_output_stream;
+// the currently saved captures of the controller that have not been flushed to the disk
 static vector<ControllerData> recording_buffer;
+// the recording time of the current recording, in seconds
 static uint32_t max_recording_time;
 
+// the virtual controller currently held by the playback
 static virtual_controller* playback_controller;
+// the currently unplayed data in the file
 static deque<ControllerData> playback_buffer;
 
-void start_recording(const string& filename, int maxSeconds);
+/**
+ * @brief Start the recording.
+ * @param filename The name of the file. Automatically appends a .vrf extension to the file.
+ * @param length The length of the recording, in seconds. 
+ */
+void start_recording(const string& filename, int length);
+/**
+ * @brief The recording thread of the recording system. Typically used by the `start_recording` method.
+ * @param param An argument required by the PROS RTOS task. Unused, just pass `nullptr` into it.
+ * @warning Only call if you know what you are doing, this is a blocking call!
+ */
 void recording_thread(void* param);
+/**
+ * @brief Clean up the recording. Only called by the recording system after the recording has ended.
+ */
 void stop_recording();
 
+/**
+ * @brief Begin the playback.
+ * @return An pointer to the virtual controller, being updated in real time in accordance to the playback timing.
+ */
 virtual_controller* begin_playback(string filename);
+/**
+ * @brief The playback thread of the recording system. Typically used by the `begin_playback` method.
+ * @param param An argument required by the PROS RTOS task. Unused, just pass `nullptr` into it.
+ */
 void playback_thread(void* param);

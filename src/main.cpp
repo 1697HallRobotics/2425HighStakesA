@@ -1,5 +1,5 @@
 #include "main.h"
-#include "vex.h"
+#include "devices.h"
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -12,16 +12,22 @@ void initialize()
 	lcd::initialize();
 	lcd::set_text(3, "                _    _ ");
 	lcd::set_text(4, "                o    o ");
-	lcd::set_text(5, "               |______|");
+	lcd::set_text(5, "               (______)");
 
 	rightMotors.set_brake_mode_all(MotorBrake::brake);
 	leftMotors.set_brake_mode_all(MotorBrake::brake);
 
-	mysteryMotor.set_brake_mode(MotorBrake::hold);
+	liftMotor.set_brake_mode(MotorBrake::hold);
+	clampMotor.set_brake_mode(MotorBrake::hold);
 
-	mysteryMotor.set_zero_position(0);
+	intakeMotor.set_brake_mode(MotorBrake::hold);
+
+	liftMotor.set_zero_position(0);
+	clampMotor.set_zero_position(0);
 	rightMotors.set_zero_position_all(0);
 	leftMotors.set_zero_position_all(0);
+
+	intakeMotor.set_zero_position(0);
 }
 
 /**
@@ -82,13 +88,48 @@ void autonomous()
 		}
 
 		if (vcontroller->get_digital_new_press(DIGITAL_R1))
-			mysteryMotor.move_absolute(400, 75);
+			liftMotor.move_absolute(400, 75);
 		else if (vcontroller->get_digital_new_press(DIGITAL_R2))
-			mysteryMotor.move_absolute(5, 50);
+			liftMotor.move_absolute(5, 50);
+
+		if (vcontroller->get_digital_new_press(DIGITAL_L1))
+			clampMotor.move_absolute(100, 75);
+		if (vcontroller->get_digital_new_press(DIGITAL_L2))
+			clampMotor.move_absolute(0, 75);
 
 		task_delay(1);
 		// i say let the kernel starve i need precision
 	}
+}
+
+void Macro_ScoreWallGoal(void *param) {
+	if (MACRO_RUNNING(MACRO_WALLGOAL)) return;
+	FLAG_MACRO_ON(MACRO_WALLGOAL);
+
+	liftMotor.move_absolute(5, 50);
+
+	// code here
+	intakeMotor.move(127);
+
+	task_delay(4000);
+
+	intakeMotor.brake();
+
+	liftMotor.move_absolute(400, 75);
+
+	task_delay(500);
+
+	intakeMotor.move(-127);
+
+	task_delay(4000);
+
+	intakeMotor.brake();
+
+	task_delay(500);
+
+	liftMotor.move_absolute(5, 50);
+
+	FLAG_MACRO_OFF(MACRO_WALLGOAL);
 }
 
 /**
@@ -106,7 +147,7 @@ void autonomous()
  */
 void opcontrol()
 {
-	start_recording("lucastest2", 20);
+	//start_recording("lucastest2", 20);
 
 	while (1)
 	{
@@ -131,9 +172,19 @@ void opcontrol()
 		}
 
 		if (controller.get_digital_new_press(DIGITAL_R1))
-			mysteryMotor.move_absolute(400, 75);
+			liftMotor.move_absolute(400, 75);
 		else if (controller.get_digital_new_press(DIGITAL_R2))
-			mysteryMotor.move_absolute(5, 50);
+			liftMotor.move_absolute(5, 50);
+
+		if (controller.get_digital(DIGITAL_L1))
+			clampMotor.move(40);
+		else if (controller.get_digital(DIGITAL_L2))
+			clampMotor.move(-40);
+		else
+			clampMotor.brake();
+
+		if (controller.get_digital_new_press(DIGITAL_A))
+			rtos::Task scoreWallGoalTask(Macro_ScoreWallGoal);
 
 		task_delay(1);
 		// i say let the kernel starve i need precision

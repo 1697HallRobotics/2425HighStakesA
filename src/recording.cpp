@@ -1,32 +1,39 @@
 #include "recording.h"
 
-void start_recording(const string &filename, int maxSeconds)
+void start_recording(const string &filename, int length)
 {
+    // check if the SD card is installed
     if (!usd::is_installed())
     {
-        lcd::set_text(1, "REC FAILED: NO USD");
+        lcd::set_text(1, "REC FAILED: NO USD (ENXIO)");
         return;
     }
 
+    // check if the controller is installed
+    // note: this uses the pros::c method in order to not create an object
+    // in a word, readability
     if (!controller_is_connected(E_CONTROLLER_MASTER))
     {
-        lcd::set_text(1, "REC FAILED: NO CONTROLLER");
+        lcd::set_text(1, "REC FAILED: NO CONTROLLER (ENXIO)");
         return;
     }
 
+    // when doing SD card IO, you MUST begin with /usd/
     recording_output_stream.open("/usd/" + filename + ".vrf", ios::binary);
 
-    if (!recording_output_stream.is_open())
+    // make sure that nothing went wrong when opening the file stream
+    // if this errors, god save you
+    if (!recording_output_stream.is_open() || recording_output_stream.bad())
     {
-        lcd::set_text(1, "REC FAILED: OFSTREAM BAD");
+        lcd::set_text(1, "REC FAILED: BAD OFSTREAM (EIO)");
         return;
     }
 
-    max_recording_time = maxSeconds;
+    max_recording_time = length;
 
     recording_buffer = vector<ControllerData>();
 
-    recording_output_stream << (unsigned char)maxSeconds;
+    recording_output_stream << (unsigned char)length;
 
     rtos::Task recording_task(recording_thread, nullptr, TASK_PRIORITY_MAX);
 }
@@ -34,22 +41,22 @@ void start_recording(const string &filename, int maxSeconds)
 void capture_controller()
 {
     ControllerData data = {
-        {(signed char)(controller_get_analog(E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_RIGHT_X)),
-         (signed char)(controller_get_analog(E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_RIGHT_Y)),
-         (signed char)(controller_get_analog(E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_LEFT_Y)),
-         (signed char)(controller_get_analog(E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_LEFT_X))},
-        {(signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_A),
-         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_B),
-         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_X),
-         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_Y),
-         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_UP),
-         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_RIGHT),
-         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_DOWN),
-         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_LEFT),
-         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_L1),
-         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_L2),
-         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_R1),
-         (signed char)controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_R2)}};
+        {(int8_t) controller_get_analog (E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_RIGHT_X),
+         (int8_t) controller_get_analog (E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_RIGHT_Y),
+         (int8_t) controller_get_analog (E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_LEFT_Y),
+         (int8_t) controller_get_analog (E_CONTROLLER_MASTER, E_CONTROLLER_ANALOG_LEFT_X)},
+        {(int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_A),
+         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_B),
+         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_X),
+         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_Y),
+         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_UP),
+         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_RIGHT),
+         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_DOWN),
+         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_LEFT),
+         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_L1),
+         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_L2),
+         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_R1),
+         (int8_t) controller_get_digital(E_CONTROLLER_MASTER, E_CONTROLLER_DIGITAL_R2)}};
 
     recording_buffer.push_back(data);
 }
@@ -81,17 +88,16 @@ void recording_thread(void *param)
 
     uint32_t captureDelay = 15; // 15ms per capture
 
-    uint32_t m_BeginFrame = millis();
+    uint32_t beginFrame = millis();
 
-    uint32_t frame_count_per_second = 0;
+    uint32_t captureCount = 0;
 
-    unsigned long long estimatedBytes = 0;
+    uint32_t prev_millis = beginFrame + captureDelay * 67;
 
-    uint32_t prev_millis = m_BeginFrame + captureDelay * 67;
+    uint32_t now = millis();
 
     lcd::print(3, "%lu controller captures", recording_buffer.size());
-    lcd::print(4, "%lu captures flushed to disk", frame_count_per_second);
-    lcd::print(5, "flushed %lu times", estimatedBytes);
+    lcd::print(4, "%lu captures flushed to disk %lu frames ago", captureCount, now - beginFrame);
 
     while (true)
     {
@@ -99,20 +105,18 @@ void recording_thread(void *param)
         lcd::print(3, "%lu controller captures", recording_buffer.size());
         capture_controller();
 
-        uint32_t now = millis();
-        ++frame_count_per_second;
+        now = millis();
+        ++captureCount;
         if (now > prev_millis)
         {
             // Flush the data to the file system to save RAM
-            lcd::print(4, "%lu captures flushed to disk", frame_count_per_second);
+            lcd::print(4, "%lu captures flushed to disk %lu frames ago", captureCount, millis() - beginFrame);
 
-            if (now >= m_BeginFrame + max_recording_time * 1000)
+            if (now >= beginFrame + max_recording_time * 1000)
                 break;
             flush_recording_buffer();
-            frame_count_per_second = 0;
+            captureCount = 0;
             prev_millis = now + captureDelay * 67;
-            estimatedBytes++;
-            lcd::print(5, "flushed %lu times", estimatedBytes);
         }
 
         // This part keeps the frame rate.
@@ -124,8 +128,10 @@ void recording_thread(void *param)
 
 virtual_controller *begin_playback(string filename)
 {
+    // allocate the virtual controller
     playback_controller = new virtual_controller();
 
+    // ensure we have something to read the data from
     if (!usd::is_installed())
     {
         lcd::set_text(1, "PLAYBACK FAILED: NO USD");
@@ -135,10 +141,13 @@ virtual_controller *begin_playback(string filename)
     ifstream stream;
     stream.open("/usd/" + filename + ".vrf", ios::binary);
 
+    // read the length of the recording
+    // currently unused, but we need to advance the stream by one at least
     char *lengthData = new char[1];
     stream.read(lengthData, sizeof(char));
     unsigned char recording_length = lengthData[0];
 
+    // read the rest of the file 16 bytes at a time
     while (!stream.eof())
     {
         char *raw = new char[16];
@@ -157,7 +166,7 @@ virtual_controller *begin_playback(string filename)
 void playback_thread(void *param)
 {
     uint32_t playbackDelay = 15; // 15ms per capture
-    uint32_t m_BeginFrame = millis();
+    uint32_t beginFrame = millis();
 
     while (1)
     {
@@ -181,16 +190,19 @@ void playback_thread(void *param)
             playback_controller->ButtonL2.pressing_value = 0;
             playback_controller->ButtonR1.pressing_value = 0;
             playback_controller->ButtonR2.pressing_value = 0;
+            // also overwrite the old data to ensure nothing gets messed up
             playback_controller->copy_old();
             break;
         }
 
+        // copy the previous controller state for get_digital_get_new_press
         playback_controller->copy_old();
 
         // Update the virtual controller to the current controller capture
         ControllerData data = playback_buffer[0];
         playback_buffer.pop_front();
 
+        // update controller state
         playback_controller->Axis1.position_value = (signed int)data.axis[0];
         playback_controller->Axis2.position_value = (signed int)data.axis[1];
         playback_controller->Axis3.position_value = (signed int)data.axis[2];
@@ -208,9 +220,15 @@ void playback_thread(void *param)
         playback_controller->ButtonR1.pressing_value = (signed int)data.digital[10];
         playback_controller->ButtonR2.pressing_value = (signed int)data.digital[11];
 
-        task_delay_until(&m_BeginFrame, playbackDelay);
-        m_BeginFrame = millis();
+        // wait 15ms, accounting for execution delay (although if that is >1-2ms we might have a problem)
+        task_delay_until(&beginFrame, playbackDelay);
+
+        // update starting frame for delay
+        beginFrame = millis();
     }
+
+    // free the allocated playback controller to prevent a memory leak when loading multiple recordings in one session
+    delete playback_controller;
 }
 
 int virtual_controller_axis::position()
