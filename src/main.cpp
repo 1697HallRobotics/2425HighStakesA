@@ -1,4 +1,37 @@
 #include "main.h"
+#include "pros/misc.h"
+#include <sys/time.h>
+#include <time.h>
+#include "math.h"
+
+int16_t xVelo = 0;
+int16_t yVelo = 0;
+
+template <typename T> int sign(T val) {
+	int ret = (T(0) < val) - (val < T(0));
+    return ret == 0 ? 1 : ret;
+}
+
+void update_dvd(lv_timer_t* timer)
+{
+	if (xVelo == 0) xVelo = (rand() % 4);
+	if (yVelo == 0) yVelo = (rand() % 4);
+
+	int16_t nextX = lv_obj_get_x(dvd_img) + xVelo;
+	int16_t nextY = lv_obj_get_y(dvd_img) + yVelo;
+
+	if (nextX < 0 || nextX > 293) {
+		xVelo = -(rand() % 4) * sign(xVelo);
+	}
+
+	if (nextY < 0 || nextY > 157) {
+		xVelo += rand() % 2 * sign(xVelo);
+		yVelo = -(rand() % 4) * sign(yVelo);
+	} 
+
+	lv_obj_set_x(dvd_img, lv_obj_get_x(dvd_img) + xVelo);
+	lv_obj_set_y(dvd_img, lv_obj_get_y(dvd_img) + yVelo);
+}
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -8,10 +41,12 @@
  */
 void initialize()
 {
-	lcd::initialize();
-	lcd::set_text(3, "                _    _ ");
-	lcd::set_text(4, "                o    o ");
-	lcd::set_text(5, "               (______)");
+	xVelo = rand() % 4;
+	yVelo = rand() % 4;
+	dvd_img = lv_img_create(lv_scr_act());
+	lv_img_set_src(dvd_img, &dvd_logo);
+
+	lv_timer_create(update_dvd, 33, NULL);
 
 	rightMotors.set_brake_mode_all(MotorBrake::brake);
 	leftMotors.set_brake_mode_all(MotorBrake::brake);
@@ -48,7 +83,25 @@ void competition_initialize() {}
 
 void autonomous_LAMEANDSTINKY()
 {
+	rightMotors.move(-127);
+	leftMotors.move(-127);
 
+	task_delay(500);
+
+	rightMotors.brake();
+	leftMotors.brake();
+
+	clampPneumatics.toggle();
+
+	task_delay(500);
+
+	rightMotors.move(127);
+	leftMotors.move(127);
+
+	task_delay(500);
+
+	rightMotors.brake();
+	leftMotors.brake();
 }
 
 void autonomous_cool()
@@ -213,6 +266,8 @@ void opcontrol()
 			clampPneumatics.toggle();
 
 		task_delay(1);
+
+		lv_timer_handler();
 	}
 
 	#undef CONTROLLER

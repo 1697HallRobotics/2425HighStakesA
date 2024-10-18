@@ -1,3 +1,6 @@
+#ifndef _RECORDING_H_
+#define _RECORDING_H_
+
 #include <fstream>
 #include <string>
 #include <vector>
@@ -92,3 +95,5 @@ void playback_thread(void* param);
  * @brief Immediately end the playback and clean it up.
  */
 void stop_playback();
+
+#endif

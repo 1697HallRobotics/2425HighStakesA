@@ -55,8 +55,11 @@
 
 #include "recording.h"
 #include "devices.h"
+#include "assets.hpp"
 
 DEFINE_MACRO(ScoreWallGoal);
+
+static lv_obj_t* dvd_img;
 
 /**
  * Prototypes for the competition control tasks are redefined here to ensure
@@ -66,7 +69,6 @@ DEFINE_MACRO(ScoreWallGoal);
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 void autonomous(void);
 void initialize(void);

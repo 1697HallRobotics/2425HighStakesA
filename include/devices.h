@@ -1,3 +1,6 @@
+#ifndef _DEVICES_H_
+#define _DEVICES_H_
+
 #include "api.h"
 
 using namespace pros;
@@ -57,3 +60,5 @@ MotorGroup leftMotors ({leftBackPort, leftFrontPort});
 MotorGroup rightMotors({rightBackPort, rightFrontPort});
 
 adi::Pneumatics clampPneumatics = adi::Pneumatics('a', false);
+
+#endif
