@@ -25,6 +25,7 @@ uint64_t RUNNING_MACROS = 0;
 #define REF_MACRO(name) macro_##name
 #define MACRO_IMPLEMENTATION(name) REF_MACRO(name)(void *param)
 #define DEFINE_MACRO(name) void MACRO_IMPLEMENTATION(name)
+#define TRIGGER_MACRO(name) pros::rtos::Task macroTask__##name(REF_MACRO(name))
 
 // The controller
 Controller controller(E_CONTROLLER_MASTER);

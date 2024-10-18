@@ -58,6 +58,9 @@ static virtual_controller* playback_controller;
 // the currently unplayed data in the file
 static deque<ControllerData> playback_buffer;
 
+// Stop the recording or playback at the next process frame.
+static bool stop_system = false;
+
 /**
  * @brief Start the recording.
  * @param filename The name of the file. Automatically appends a .vrf extension to the file.
@@ -71,7 +74,7 @@ void start_recording(const string& filename, int length);
  */
 void recording_thread(void* param);
 /**
- * @brief Clean up the recording. Only called by the recording system after the recording has ended.
+ * @brief Immediately end the recording and clean it up.
  */
 void stop_recording();
 
@@ -85,3 +88,7 @@ virtual_controller* begin_playback(string filename);
  * @param param An argument required by the PROS RTOS task. Unused, just pass `nullptr` into it.
  */
 void playback_thread(void* param);
+/**
+ * @brief Immediately end the playback and clean it up.
+ */
+void stop_playback();

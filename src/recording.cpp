@@ -35,6 +35,8 @@ void start_recording(const string &filename, int length)
 
     recording_output_stream << (unsigned char)length;
 
+    stop_system = false;
+
     rtos::Task recording_task(recording_thread, nullptr, TASK_PRIORITY_MAX);
 }
 
@@ -106,6 +108,8 @@ void recording_thread(void *param)
 
     while (true)
     {
+        if (stop_system) break;
+
         // Save the data to the recording buffer
         lcd::print(3, "%lu controller captures", recording_buffer.size());
         capture_controller();
@@ -115,7 +119,7 @@ void recording_thread(void *param)
         if (now > prev_millis)
         {
             // Flush the data to the file system to save RAM
-            lcd::print(4, "%lu captures flushed to disk %lu frames ago", captureCount, millis() - beginFrame);
+            lcd::print(4, "%lu captures flushed to disk %lu frames ago", captureCount, now - beginFrame);
 
             if (now >= beginFrame + max_recording_time * 1000)
                 break;
@@ -125,10 +129,22 @@ void recording_thread(void *param)
         }
 
         // This part keeps the frame rate.
-        task_delay_until(&now, captureDelay);
+        task_delay_until(&beginFrame, captureDelay);
+        beginFrame = millis();
     }
 
     stop_recording();
+}
+
+void stop_recording()
+{
+    if (stop_system) {
+        stop_system = false;
+        return;
+    }
+    stop_system = true;
+    flush_recording_buffer();
+    recording_output_stream.close();
 }
 
 virtual_controller *begin_playback(string filename)
@@ -163,6 +179,8 @@ virtual_controller *begin_playback(string filename)
         playback_buffer.push_back(data);
     }
 
+    stop_system = false;
+
     rtos::Task playback_task(playback_thread, nullptr, TASK_PRIORITY_MAX);
 
     return playback_controller;
@@ -175,30 +193,7 @@ void playback_thread(void *param)
 
     while (1)
     {
-        if (playback_buffer.size() == 0)
-        {
-            lcd::set_text(7, "END");
-            // zero out everything so the robot isn't moving to infinity
-            playback_controller->Axis1.position_value = 0;
-            playback_controller->Axis2.position_value = 0;
-            playback_controller->Axis3.position_value = 0;
-            playback_controller->Axis4.position_value = 0;
-            playback_controller->ButtonA.pressing_value = 0;
-            playback_controller->ButtonB.pressing_value = 0;
-            playback_controller->ButtonX.pressing_value = 0;
-            playback_controller->ButtonY.pressing_value = 0;
-            playback_controller->ButtonUp.pressing_value = 0;
-            playback_controller->ButtonRight.pressing_value = 0;
-            playback_controller->ButtonDown.pressing_value = 0;
-            playback_controller->ButtonLeft.pressing_value = 0;
-            playback_controller->ButtonL1.pressing_value = 0;
-            playback_controller->ButtonL2.pressing_value = 0;
-            playback_controller->ButtonR1.pressing_value = 0;
-            playback_controller->ButtonR2.pressing_value = 0;
-            // also overwrite the old data to ensure nothing gets messed up
-            playback_controller->copy_old();
-            break;
-        }
+        if (playback_buffer.size() == 0 || stop_system) break;
 
         // copy the previous controller state for get_digital_get_new_press
         playback_controller->copy_old();
@@ -231,6 +226,39 @@ void playback_thread(void *param)
         // update starting frame for delay
         beginFrame = millis();
     }
+
+    stop_playback();
+}
+
+void stop_playback()
+{
+    if (stop_system) {
+        stop_system = false;
+        return;
+    }
+    stop_system = true;
+    lcd::set_text(7, "END");
+    // zero out everything so the robot isn't moving to infinity
+    playback_controller->Axis1.position_value = 0;
+    playback_controller->Axis2.position_value = 0;
+    playback_controller->Axis3.position_value = 0;
+    playback_controller->Axis4.position_value = 0;
+    playback_controller->ButtonA.pressing_value = 0;
+    playback_controller->ButtonB.pressing_value = 0;
+    playback_controller->ButtonX.pressing_value = 0;
+    playback_controller->ButtonY.pressing_value = 0;
+    playback_controller->ButtonUp.pressing_value = 0;
+    playback_controller->ButtonRight.pressing_value = 0;
+    playback_controller->ButtonDown.pressing_value = 0;
+    playback_controller->ButtonLeft.pressing_value = 0;
+    playback_controller->ButtonL1.pressing_value = 0;
+    playback_controller->ButtonL2.pressing_value = 0;
+    playback_controller->ButtonR1.pressing_value = 0;
+    playback_controller->ButtonR2.pressing_value = 0;
+    // also overwrite the old data to ensure nothing gets messed up
+    playback_controller->copy_old();
+
+    playback_buffer.clear();
 
     // free the allocated playback controller to prevent a memory leak when loading multiple recordings in one session
     delete playback_controller;
@@ -343,10 +371,4 @@ void virtual_controller::copy_old()
     PrevButtonL2    = ButtonL2;
     PrevButtonR1    = ButtonR1;
     PrevButtonR2    = ButtonL2;
-}
-
-void stop_recording()
-{
-    flush_recording_buffer();
-    recording_output_stream.close();
 }

@@ -1,4 +1,4 @@
-const {Tween, Easing, Group} = TWEEN
+const {Tween, Easing, Group} = TWEEN;
 
 let playback_buffer = new Array(), original_playback_buffer = new Array();
 
@@ -23,15 +23,15 @@ function duplicate_action() {
     if (recent_action.action != "update_buffer") return;
     for (let i = 1; i <= amount; i++) {
         playback_buffer[playback_cursor + i][recent_action.common_data[0]][recent_action.common_data[1]] = recent_action.new_data[0]
-    }
+    };
 
     update_ui(playback_cursor);
-}
+};
 
 function add_undo_action(action) {
     undo_stack.push(action);
     redo_stack.length = 0;
-}
+};
 
 function undo() {
     if (undo_stack.length == 0) return;
@@ -40,7 +40,7 @@ function undo() {
     switch (undo_action.action) {
         case "update_buffer":
             playback_cursor = undo_action.cursor_position;
-            playback_buffer[playback_cursor][undo_action.common_data[0]][undo_action.common_data[1]] = undo_action.old_data[0]
+            playback_buffer[playback_cursor][undo_action.common_data[0]][undo_action.common_data[1]] = undo_action.old_data[0];
             break;
         case "move_cursor":
             playback_cursor = undo_action.old_data[0];
@@ -52,7 +52,7 @@ function undo() {
     redo_stack.push(undo_action);
 
     update_ui(playback_cursor);
-}
+};
 
 function redo() {
     if (redo_stack.length == 0) return;
@@ -61,25 +61,25 @@ function redo() {
     switch (redo_action.action) {
         case "update_buffer":
             playback_cursor = redo_action.cursor_position;
-            playback_buffer[playback_cursor][redo_action.common_data[0]][redo_action.common_data[1]] = redo_action.new_data[0]
+            playback_buffer[playback_cursor][redo_action.common_data[0]][redo_action.common_data[1]] = redo_action.new_data[0];
             break;
         case "move_cursor":
             playback_cursor = redo_action.new_data[0];
             break;
         default:
             break;
-    }
+    };
 
     undo_stack.push(redo_action);
 
     update_ui(playback_cursor);
-}
+};
 
 function resetBuffer() {
     playback_buffer = structuredClone(original_playback_buffer);
     playback_cursor = 0;
     update_ui(playback_cursor);
-}
+};
 
 function save() {
     let serialized_buffer = new Int8Array(1 + playback_buffer.length * 16);
@@ -116,7 +116,7 @@ function save() {
     a.click();
 
     window.URL.revokeObjectURL(url);
-}
+};
 
 function add_cursor(idx) {
     add_undo_action({
@@ -129,13 +129,12 @@ function add_cursor(idx) {
     
     playback_cursor += idx;
     update_ui(playback_cursor);
-}
+};
 
 function stop_playback() {
     if (isRunning) stopNextTick = true;
     else update_ui(0);
-    
-}
+};
 
 function update_ui(idx) {
     $("#progress").val(idx.toString());
@@ -172,8 +171,8 @@ function update_ui(idx) {
     $("#digital_r1")   .toggleClass("pressing", playback_buffer[idx].digital[10] == 1);
     $("#digital_r2")   .toggleClass("pressing", playback_buffer[idx].digital[11] == 1);
     
-    $("#joycon_right").css("transform", "translate(" + (playback_buffer[idx].axis[0] * 2.5) + "px," + (playback_buffer[idx].axis[1] * -2.5) + "px)")
-    $("#joycon_left") .css("transform", "translate(" + (playback_buffer[idx].axis[2] * 2.5) + "px," + (playback_buffer[idx].axis[3] * -2.5) + "px)")
+    $("#joycon_right").css("transform", "translate(" + (playback_buffer[idx].axis[0] * 2.5) + "px," + (playback_buffer[idx].axis[1] * -2.5) + "px)");
+    $("#joycon_left") .css("transform", "translate(" + (playback_buffer[idx].axis[2] * 2.5) + "px," + (playback_buffer[idx].axis[3] * -2.5) + "px)");
 
     $("#undostack").text(JSON.stringify(undo_stack));
     $("#redostack").text(JSON.stringify(redo_stack));
@@ -181,7 +180,7 @@ function update_ui(idx) {
     Array.from(document.getElementsByTagName("input")).forEach(item => {
         item.blur();
     });
-}
+};
 
 function begin_playback(start_pos = 0) {
     if (isRunning) return;
@@ -194,7 +193,7 @@ function begin_playback(start_pos = 0) {
     tickPlayback();
     $("#button_stop").text("Pause");
     isRunning = true;
-}
+};
 
 function tickPlayback() {
     // stop if user says to stop or if cursor has reached end
@@ -220,8 +219,8 @@ function tickPlayback() {
         // update stuff
         playback_cursor++;
         update_ui(playback_cursor);
-    }
-}
+    };
+};
 
 function saveToBuffer(section, idx, data) {
     let newValue = section === "axis" ? data : (data ? 1 : 0);
@@ -241,13 +240,13 @@ function animate(time) {
     tweens.forEach((val) => {
         val.update(time)
         if (!val.isPlaying()) {
-            const index = array.indexOf(val);
+            const index = tweens.indexOf(val);
             if (index > -1) { // only splice array when item is found
-              array.splice(index, 1); // 2nd parameter means remove one item only
+                tweens.splice(index, 1); // 2nd parameter means remove one item only
             }
         }
     })
-    requestAnimationFrame(animate)
+    requestAnimationFrame(animate);
 }
 
 window.onload = function () {
@@ -256,14 +255,14 @@ window.onload = function () {
         // clear out the array in the event of loading a new file if one is already loaded
         if (coords.y == -50) {
             const tween = new Tween(coords, false).to({x: -50, y: 400 }, 1000).easing(Easing.Quadratic.InOut).onUpdate(() => {
-                document.getElementById("input_button").style.setProperty("transform", "translate(" + coords.x + "%, " + coords.y + "%)")
+                document.getElementById("input_button").style.setProperty("transform", "translate(" + coords.x + "%, " + coords.y + "%)");
             }).start();
             const tween2 = new Tween(alpha, false).to({val: 100}, 1200).easing(Easing.Quadratic.InOut).onUpdate(() => {
-                document.getElementById("data_ui").style.setProperty("opacity", alpha.val + "%")
-                document.getElementById("controller_ui").style.setProperty("opacity", alpha.val + "%")
+                document.getElementById("data_ui").style.setProperty("opacity", alpha.val + "%");
+                document.getElementById("controller_ui").style.setProperty("opacity", alpha.val + "%");
             }).start();
             tweens.push(tween);
-            tweens.push(tween2)
+            tweens.push(tween2);
         }
         playback_buffer.length = 0;
         let reader = new FileReader();
@@ -278,7 +277,7 @@ window.onload = function () {
                     "axis": [array[cursor++], array[cursor++], array[cursor++], array[cursor++]],
                     "digital": [array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++]]
                 });
-            }
+            };
             // copy the original to a reserve buffer
             original_playback_buffer = structuredClone(playback_buffer);
 
@@ -325,9 +324,9 @@ window.onload = function () {
             "cursor_position": playback_cursor
         })
         previous_position = playback_cursor;
-    })
+    });
 
-    requestAnimationFrame(animate)
+    requestAnimationFrame(animate);
 }
 
 window.onkeydown = function (evt) {

@@ -46,28 +46,24 @@ void disabled() {}
  */
 void competition_initialize() {}
 
-/**
- * Runs the user autonomous code. This function will be started in its own task
- * with the default priority and stack size whenever the robot is enabled via
- * the Field Management System or the VEX Competition Switch in the autonomous
- * mode. Alternatively, this function may be called in initialize or opcontrol
- * for non-competition testing purposes.
- *
- * If the robot is disabled or communications is lost, the autonomous task
- * will be stopped. Re-enabling the robot will restart the task, not re-start it
- * from where it left off.
- */
-void autonomous() 
+void autonomous_LAMEANDSTINKY()
+{
+
+}
+
+void autonomous_cool()
 {
 	virtual_controller* vcontroller = begin_playback("lucastest2");
 	if (vcontroller == nullptr)
 		return;
 
+	#define CONTROLLER (*vcontroller)
+
 	while (1)
 	{
 		// clamp the controller from 0-100
-		float turnPower = vcontroller->get_analog(ANALOG_LEFT_X);
-		float forwardPower = vcontroller->get_analog(ANALOG_LEFT_Y);
+		float turnPower = CONTROLLER.get_analog(ANALOG_LEFT_X);
+		float forwardPower = CONTROLLER.get_analog(ANALOG_LEFT_Y);
 
 		if (fabsf(turnPower) <= deadzone)
 			turnPower = 0;
@@ -85,22 +81,48 @@ void autonomous()
 			leftMotors.brake();
 		}
 
-		if (vcontroller->get_digital_new_press(DIGITAL_R1))
+		if (CONTROLLER.get_digital_new_press(DIGITAL_R1))
 			liftMotor.move_absolute(400, 75);
-		else if (vcontroller->get_digital_new_press(DIGITAL_R2))
+		else if (CONTROLLER.get_digital_new_press(DIGITAL_R2))
 			liftMotor.move_absolute(5, 50);
 
-		if (vcontroller->get_digital_new_press(DIGITAL_L1))
-			clampMotor.move_absolute(100, 75);
-		if (vcontroller->get_digital_new_press(DIGITAL_L2))
-			clampMotor.move_absolute(0, 75);
+		if (CONTROLLER.get_digital(DIGITAL_L1))
+			clampMotor.move(40);
+		else if (CONTROLLER.get_digital(DIGITAL_L2))
+			clampMotor.move(-40);
+		else
+			clampMotor.brake();
+
+		if (CONTROLLER.get_digital_new_press(DIGITAL_A)) TRIGGER_MACRO(ScoreWallGoal);
+
+		if (CONTROLLER.get_digital_new_press(DIGITAL_B))
+			clampPneumatics.toggle();
 
 		task_delay(1);
-		// i say let the kernel starve i need precision
 	}
+
+	#undef CONTROLLER
 }
 
-void MACRO_IMPLEMENTATION(ScoreWallGoal) {
+/**
+ * Runs the user autonomous code. This function will be started in its own task
+ * with the default priority and stack size whenever the robot is enabled via
+ * the Field Management System or the VEX Competition Switch in the autonomous
+ * mode. Alternatively, this function may be called in initialize or opcontrol
+ * for non-competition testing purposes.
+ *
+ * If the robot is disabled or communications is lost, the autonomous task
+ * will be stopped. Re-enabling the robot will restart the task, not re-start it
+ * from where it left off.
+ */
+void autonomous() 
+{
+	autonomous_cool();
+	//autonomous_LAMEANDSTINKY();
+}
+
+void MACRO_IMPLEMENTATION(ScoreWallGoal)
+{
 	if (MACRO_RUNNING(MACRO_WALLGOAL)) return;
 	FLAG_MACRO_ON(MACRO_WALLGOAL);
 
@@ -147,11 +169,14 @@ void opcontrol()
 {
 	//start_recording("lucastest2", 20);
 
+	// this is used for autonomous to easily swap out the controller with the virtual controller
+	#define CONTROLLER controller
+
 	while (1)
 	{
 		// clamp the controller from 0-100
-		float turnPower = controller.get_analog(ANALOG_LEFT_X);
-		float forwardPower = controller.get_analog(ANALOG_LEFT_Y);
+		float 	turnPower = CONTROLLER.get_analog(ANALOG_LEFT_X),
+		      	forwardPower = CONTROLLER.get_analog(ANALOG_LEFT_Y);
 
 		if (fabsf(turnPower) <= deadzone)
 			turnPower = 0;
@@ -169,24 +194,26 @@ void opcontrol()
 			leftMotors.brake();
 		}
 
-		if (controller.get_digital_new_press(DIGITAL_R1))
+		if (CONTROLLER.get_digital_new_press(DIGITAL_R1))
 			liftMotor.move_absolute(400, 75);
-		else if (controller.get_digital_new_press(DIGITAL_R2))
+		else if (CONTROLLER.get_digital_new_press(DIGITAL_R2))
 			liftMotor.move_absolute(5, 50);
 
-		if (controller.get_digital(DIGITAL_L1))
+		if (CONTROLLER.get_digital(DIGITAL_L1))
 			clampMotor.move(40);
-		else if (controller.get_digital(DIGITAL_L2))
+		else if (CONTROLLER.get_digital(DIGITAL_L2))
 			clampMotor.move(-40);
 		else
 			clampMotor.brake();
 
-		if (controller.get_digital_new_press(DIGITAL_A))
-			rtos::Task scoreWallGoalTask(REF_MACRO(ScoreWallGoal));
+		if (CONTROLLER.get_digital_new_press(DIGITAL_A))
+			TRIGGER_MACRO(ScoreWallGoal);
 
-		if (controller.get_digital_new_press(DIGITAL_B))
+		if (CONTROLLER.get_digital_new_press(DIGITAL_B))
 			clampPneumatics.toggle();
 
 		task_delay(1);
 	}
+
+	#undef CONTROLLER
 }
