@@ -14,15 +14,16 @@ Controller controller(E_CONTROLLER_MASTER);
 const float deadzone = 10.1f;
 
 // The motor's base speed, as a multiplier.
-const float speed = 1.0f;
+const float speed = 0.65f;
 
-const int8_t leftBackPort     = 11;
-const int8_t leftFrontPort    = 5;
-const int8_t rightBackPort    = 6;
-const int8_t rightFrontPort   = 3;
+const int8_t leftBackPort     = -16;
+const int8_t leftFrontPort    = -3;
+const int8_t rightBackPort    = -6;
+const int8_t rightFrontPort   = -5;
 const int8_t liftPort         = 14;
 const int8_t intakePort       = -9;
-const int8_t rampPort         = 0;
+const int8_t liftIntakePort   = 0; // TODO
+const int8_t rampPort         = 0; // TODO
 const int8_t clampPort        = 16;
 
 const int8_t distanceSensorPort = 8;
@@ -34,6 +35,7 @@ Motor rightFrontMotor (rightFrontPort);
 Motor liftMotor       (liftPort);
 Motor rampMotor       (rampPort);
 Motor intakeMotor     (intakePort);
+Motor liftIntakeMotor (liftIntakePort);
 
 MotorGroup leftMotors ({leftBackPort, leftFrontPort});
 MotorGroup rightMotors({rightBackPort, rightFrontPort});

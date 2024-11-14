@@ -1,11 +1,66 @@
+// ☆*: .｡. o(≧▽≦)o .｡.:*☆
+
 #include "main.h"
-#include "pros/misc.h"
-#include <sys/time.h>
-#include <time.h>
-#include "math.h"
 
 int16_t xVelo = 0;
 int16_t yVelo = 0;
+uint8_t dvdTimer = 0;
+
+#define DRIVE()                                                                             \
+uint8_t intakeSpinning = 0;                                                                 \
+while (1)                                                                                   \
+{                                                                                           \
+	float turnPower = CONTROLLER.get_analog(ANALOG_RIGHT_X);                                \
+	float forwardPower = CONTROLLER.get_analog(ANALOG_LEFT_Y);                              \
+	if (fabsf(turnPower) <= deadzone)                                                       \
+		turnPower = 0;                                                                      \
+	if (fabsf(forwardPower) <= deadzone)                                                    \
+		forwardPower = 0;                                                                   \
+\
+	if (turnPower != 0 || forwardPower != 0)                                            	\
+	{                                                                                   	\
+		rightMotors.move((turnPower - forwardPower) * speed);                           	\
+		leftMotors.move((turnPower + forwardPower) * speed);                            	\
+	}                                                                                   	\
+	else                                                                                	\
+	{                                                                                   	\
+		rightMotors.brake();                                                            	\
+		leftMotors.brake();                                                             	\
+	}                                                                                   	\
+\
+	if (CONTROLLER.get_digital_new_press(DIGITAL_R1))                                   	\
+		liftMotor.move_absolute(400, 75);                                               	\
+	else if (CONTROLLER.get_digital_new_press(DIGITAL_R2))                              	\
+		liftMotor.move_absolute(5, 50);                                                 	\
+\
+	if (CONTROLLER.get_digital_new_press(DIGITAL_A))                                    	\
+		TRIGGER_MACRO(ScoreWallGoal);                                                   	\
+\
+	if (CONTROLLER.get_digital_new_press(DIGITAL_B))                                    	\
+		clampPneumatics.toggle();                                                       	\
+\
+	if (CONTROLLER.get_digital_new_press(DIGITAL_R1)) {                                 	\
+		if (intakeSpinning == 1) intakeSpinning = 0;                                    	\
+		else intakeSpinning = 1;                                                        	\
+	}                                                                                   	\
+\
+	if (CONTROLLER.get_digital_new_press(DIGITAL_L2)) {                                 	\
+		if (intakeSpinning == 2) intakeSpinning = 0;                                    	\
+		else intakeSpinning = 2;                                                        	\
+	}                                                                                   	\
+\
+	if (intakeSpinning == 1) {																\
+		intakeMotor.move(127);                                     							\
+	} else if (intakeSpinning == 2) {														\
+		intakeMotor.move(-127);                               								\
+	} else {																				\
+		intakeMotor.brake();                                                           		\
+	}																						\
+\
+	task_delay(1);                                                                      	\
+\
+	lv_timer_handler();                                                                 	\
+}
 
 template <typename T> int sign(T val) {
 	int ret = (T(0) < val) - (val < T(0));
@@ -33,7 +88,17 @@ void update_dvd(lv_timer_t* timer)
 	lv_obj_set_y(dvd_img, lv_obj_get_y(dvd_img) + yVelo);
 	
 	if (battery::get_capacity() < 15) {
-		lv_style_set_img_recolor(dvd_img->styles->style, LV_COLOR_MAKE32(255, 0, 0));
+		if (++dvdTimer > 33)
+		{
+			lv_style_set_img_recolor(dvd_img->styles->style, LV_COLOR_MAKE32(255, 0, 0));
+		}
+		else if (dvdTimer > 66)
+		{
+			dvdTimer = 0;
+			lv_style_set_img_recolor(dvd_img->styles->style, LV_COLOR_MAKE32(255, 255, 255));
+		}
+		
+		
 	}
 }
 
@@ -123,73 +188,8 @@ void autonomous_cool()
 
 	#define CONTROLLER (*vcontroller)
 
-	uint8_t intakeSpinning = 0;
-	while (1)
-	{
-		// clamp the controller from 0-100
-		float 	turnPower = CONTROLLER.get_analog(ANALOG_RIGHT_X),
-		      	forwardPower = CONTROLLER.get_analog(ANALOG_LEFT_Y);
-		if (fabsf(turnPower) <= deadzone)
-			turnPower = 0;
-		if (fabsf(forwardPower) <= deadzone)
-			forwardPower = 0;
-
-		if (turnPower != 0 || forwardPower != 0)
-		{
-			rightMotors.move((turnPower - forwardPower) * speed);
-			leftMotors.move((turnPower + forwardPower) * speed);
-		}
-		else
-		{
-			rightMotors.brake();
-			leftMotors.brake();
-		}
-
-		if (CONTROLLER.get_digital_new_press(DIGITAL_R1))
-			liftMotor.move_absolute(400, 75);
-		else if (CONTROLLER.get_digital_new_press(DIGITAL_R2))
-			liftMotor.move_absolute(5, 50);
-
-		
-		if (CONTROLLER.get_digital(DIGITAL_L1))
-		{
-			intakeMotor.move(40);
-			liftMotor.move(40);
-		}
-		else if (CONTROLLER.get_digital(DIGITAL_L2))
-		{
-			intakeMotor.move(-40);
-			liftMotor.move(-40);
-		}
-		else
-			intakeMotor.brake();
-		
-
-		if (CONTROLLER.get_digital_new_press(DIGITAL_A))
-			TRIGGER_MACRO(ScoreWallGoal);
-
-		if (CONTROLLER.get_digital_new_press(DIGITAL_B))
-			clampPneumatics.toggle();
-
-		if (CONTROLLER.get_digital_new_press(DIGITAL_L1)) {
-			if (intakeSpinning == 1) intakeSpinning = 0;
-			else intakeSpinning = 1;
-		}
-
-		if (CONTROLLER.get_digital_new_press(DIGITAL_L2)) {
-			if (intakeSpinning == 2) intakeSpinning = 0;
-			else intakeSpinning = 2;
-		}
-
-		if (intakeSpinning == 1) intakeMotor.move(127);
-		else if (intakeSpinning == 2) intakeMotor.move(-127);
-		else intakeMotor.brake();
-
-		task_delay(1);
-
-		lv_timer_handler();
-	}
-
+	DRIVE();
+	
 	#undef CONTROLLER
 }
 
@@ -257,77 +257,10 @@ void MACRO_IMPLEMENTATION(ScoreWallGoal)
  */
 void opcontrol()
 {
-	//start_recording("20241019-1", 15);
-
 	// this is used for autonomous to easily swap out the controller with the virtual controller
 	#define CONTROLLER controller
 
-	uint8_t intakeSpinning = 0;
-	while (1)
-	{
-		// clamp the controller from 0-100
-		float 	turnPower = CONTROLLER.get_analog(ANALOG_RIGHT_X),
-		      	forwardPower = CONTROLLER.get_analog(ANALOG_LEFT_Y);
-		if (fabsf(turnPower) <= deadzone)
-			turnPower = 0;
-		if (fabsf(forwardPower) <= deadzone)
-			forwardPower = 0;
-
-		if (turnPower != 0 || forwardPower != 0)
-		{
-			rightMotors.move((turnPower - forwardPower) * speed);
-			leftMotors.move((turnPower + forwardPower) * speed);
-		}
-		else
-		{
-			rightMotors.brake();
-			leftMotors.brake();
-		}
-
-		if (CONTROLLER.get_digital_new_press(DIGITAL_R1))
-			liftMotor.move_absolute(400, 75);
-		else if (CONTROLLER.get_digital_new_press(DIGITAL_R2))
-			liftMotor.move_absolute(5, 50);
-
-		
-		if (CONTROLLER.get_digital(DIGITAL_L1))
-		{
-			intakeMotor.move(40);
-			liftMotor.move(40);
-		}
-		else if (CONTROLLER.get_digital(DIGITAL_L2))
-		{
-			intakeMotor.move(-40);
-			liftMotor.move(-40);
-		}
-		else
-			intakeMotor.brake();
-		
-
-		if (CONTROLLER.get_digital_new_press(DIGITAL_A))
-			TRIGGER_MACRO(ScoreWallGoal);
-
-		if (CONTROLLER.get_digital_new_press(DIGITAL_B))
-			clampPneumatics.toggle();
-
-		if (CONTROLLER.get_digital_new_press(DIGITAL_L1)) {
-			if (intakeSpinning == 1) intakeSpinning = 0;
-			else intakeSpinning = 1;
-		}
-
-		if (CONTROLLER.get_digital_new_press(DIGITAL_L2)) {
-			if (intakeSpinning == 2) intakeSpinning = 0;
-			else intakeSpinning = 2;
-		}
-
-		if (intakeSpinning == 1) intakeMotor.move(127);
-		else if (intakeSpinning == 2) intakeMotor.move(-127);
-		else intakeMotor.brake();
-
-		task_delay(1);
-
-		lv_timer_handler();
-	}
+	DRIVE();
 
 	#undef CONTROLLER
 }
