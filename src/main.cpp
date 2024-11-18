@@ -89,12 +89,12 @@ void update_dvd(lv_timer_t* timer)
 	if (battery::get_capacity() < 15) {
 		if (++dvdTimer > 33)
 		{
-			lv_style_set_img_recolor(dvd_img->styles->style, LV_COLOR_MAKE32(255, 0, 0));
+			lv_style_set_img_recolor(dvd_img->styles->style, LV_COLOR_MAKE(255, 0, 0));
 		}
 		else if (dvdTimer > 66)
 		{
 			dvdTimer = 0;
-			lv_style_set_img_recolor(dvd_img->styles->style, LV_COLOR_MAKE32(255, 255, 255));
+			lv_style_set_img_recolor(dvd_img->styles->style, LV_COLOR_MAKE(255, 255, 255));
 		}
 		
 		
