@@ -1,4 +1,6 @@
 // ☆*: .｡. o(≧▽≦)o .｡.:*☆
+// 😊😊😊😊😊😊😊😊😊😊😊😊😊😁😁😁😁😁😁🙌🙌🙌🙌🙌
+//ヾ(＠⌒ー⌒＠)ノ♪(´▽｀)( •̀ ω •́ )y(o゜▽゜)o☆(´･ω･`)?
 
 #include "main.h"
 
@@ -39,20 +41,17 @@ while (1)                                                                       
 	if (CONTROLLER.get_digital_new_press(DIGITAL_B))                                    	\
 		clampPneumatics.toggle();                                                       	\
 \
-	if (CONTROLLER.get_digital_new_press(DIGITAL_R1)) {                                 	\
-		if (intakeSpinning == 1) intakeSpinning = 0;                                    	\
-		else intakeSpinning = 1;                                                        	\
+	if (CONTROLLER.get_digital_new_press(DIGITAL_L1)) {                                 	\
+		intakeSpinning = 0;                                    								\
 	}                                                                                   	\
 \
 	if (CONTROLLER.get_digital_new_press(DIGITAL_L2)) {                                 	\
-		if (intakeSpinning == 2) intakeSpinning = 0;                                    	\
-		else intakeSpinning = 2;                                                        	\
+		if (intakeSpinning) intakeSpinning = 0;                                    			\
+		else intakeSpinning = 1;                                                        	\
 	}                                                                                   	\
 \
-	if (intakeSpinning == 1) {																\
-		intakeMotor.move(127);                                     							\
-	} else if (intakeSpinning == 2) {														\
-		intakeMotor.move(-127);                               								\
+	if (intakeSpinning) {																	\
+		intakeMotor.move(-58);                                     							\
 	} else {																				\
 		intakeMotor.brake();                                                           		\
 	}																						\
@@ -60,7 +59,7 @@ while (1)                                                                       
 	task_delay(1);                                                                      	\
 \
 	lv_timer_handler();                                                                 	\
-}
+}																							\
 
 template <typename T> int sign(T val) {
 	int ret = (T(0) < val) - (val < T(0));
@@ -153,6 +152,7 @@ void disabled() {}
  * This task will exit when the robot is enabled and autonomous or opcontrol
  * starts.
  */
+ 
 void competition_initialize() {}
 
 void autonomous_LAMEANDSTINKY()
@@ -183,6 +183,7 @@ void autonomous_LAMEANDSTINKY()
 void autonomous_cool()
 {
 	virtual_controller* vcontroller = begin_playback("20241019-1");
+	//virtual_controller* vcontroller = begin_playback("judgelivedemo");
 	if (vcontroller == nullptr)
 		return;
 
@@ -257,6 +258,8 @@ void MACRO_IMPLEMENTATION(ScoreWallGoal)
  */
 void opcontrol()
 {
+
+	//start_recording("judgelivedemo", 10);
 	// this is used for autonomous to easily swap out the controller with the virtual controller
 	#define CONTROLLER controller
 

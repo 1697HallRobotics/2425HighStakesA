@@ -20,8 +20,8 @@ const int8_t leftBackPort     = -16;
 const int8_t leftFrontPort    = -3;
 const int8_t rightBackPort    = -6;
 const int8_t rightFrontPort   = -5;
-const int8_t liftPort         = 14;
-const int8_t intakePort       = -9;
+const int8_t liftPort         = 0;
+const int8_t intakePort       = 14;
 const int8_t liftIntakePort   = 0; // TODO
 const int8_t rampPort         = 0; // TODO
 const int8_t clampPort        = 16;
@@ -29,7 +29,7 @@ const int8_t clampPort        = 16;
 const int8_t distanceSensorPort = 8;
 
 Motor leftBackMotor   (leftBackPort);
-Motor leftFrontMotor  (leftFrontPort);
+Motor leftFrontMotor  (leftFrontPort); //helo <3
 Motor rightBackMotor  (rightBackPort);
 Motor rightFrontMotor (rightFrontPort);
 Motor liftMotor       (liftPort);
