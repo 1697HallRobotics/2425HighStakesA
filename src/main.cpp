@@ -101,6 +101,8 @@ void update_dvd(lv_timer_t* timer)
 	}
 }
 
+
+
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
