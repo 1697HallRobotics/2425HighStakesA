@@ -3,10 +3,11 @@
 //ヾ(＠⌒ー⌒＠)ノ♪(´▽｀)( •̀ ω •́ )y(o゜▽゜)o☆(´･ω･`)?
 
 #include "main.h"
+#include "images.h"
 
 int16_t xVelo = 0;
 int16_t yVelo = 0;
-uint8_t dvdTimer = 0;
+uint64_t dvdTimer = 0;
 
 #define DRIVE()                                                                             \
 uint8_t intakeSpinning = 0;                                                                 \
@@ -101,7 +102,12 @@ void update_dvd(lv_timer_t* timer)
 	}
 }
 
-
+void update_cat(lv_timer_t* timer) {
+	printf("%llu\n", dvdTimer);
+	lv_img_set_src(dvd_img, &(cat_gif[(dvdTimer) % 36]));
+	dvdTimer++;
+	lv_obj_invalidate(dvd_img);
+}
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -111,6 +117,9 @@ void update_dvd(lv_timer_t* timer)
  */
 void initialize()
 {
+	init_catgif();
+
+/*
 	xVelo = rand() % 4;
 	yVelo = rand() % 4;
 	dvd_img = lv_img_create(lv_scr_act());
@@ -121,8 +130,16 @@ void initialize()
 	lv_style_set_img_recolor_opa(&style1, LV_OPA_COVER);
 	lv_style_set_img_recolor(&style1, lv_color_white());
 	lv_obj_add_style(dvd_img, &style1, LV_STATE_DEFAULT);
+	*/
 
-	lv_timer_create(update_dvd, 33, NULL);
+	dvd_img = lv_img_create(lv_scr_act());
+	lv_img_set_src(dvd_img, &frame_00);
+	lv_obj_align(dvd_img, LV_ALIGN_CENTER, 0, 0);
+	lv_obj_set_size(dvd_img, 480, 240);
+	lv_img_set_zoom(dvd_img, 256);
+	
+
+	lv_timer_create(update_cat, 90, NULL);
 
 	rightMotors.set_brake_mode_all(MotorBrake::brake);
 	leftMotors.set_brake_mode_all(MotorBrake::brake);

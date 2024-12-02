@@ -256,7 +256,8 @@
     },
     "upload_options": {
       "icon": "pizza",
-      "description": "team a on top"
+      "description": "team a on top",
+      "slot": 2
     },
     "use_early_access": false
   }

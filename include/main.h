@@ -56,6 +56,9 @@
 #include "recording.h"
 #include "devices.h"
 #include "assets.hpp"
+extern "C" {
+#include "images.h"
+}
 
 DEFINE_MACRO(ScoreWallGoal);
 

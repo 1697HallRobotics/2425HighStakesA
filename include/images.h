@@ -1,5 +1,15 @@
+#ifndef _IMAGES_H_
+#define _IMAGES_H_
+
 #include "liblvgl/lvgl.h"
 
+extern lv_img_dsc_t cat_gif[36];
+
+extern void init_catgif();
+
+extern const uint8_t frame_00_map[];
+
+LV_IMG_DECLARE(frame_00);
 LV_IMG_DECLARE(frame_01);
 LV_IMG_DECLARE(frame_02);
 LV_IMG_DECLARE(frame_03);
@@ -36,6 +46,4 @@ LV_IMG_DECLARE(frame_33);
 LV_IMG_DECLARE(frame_34);
 LV_IMG_DECLARE(frame_35);
 
-extern const lv_img_dsc_t cat_gif[36];
-
-void init_catgif();
+#endif
