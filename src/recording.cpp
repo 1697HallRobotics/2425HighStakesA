@@ -91,7 +91,9 @@ void flush_recording_buffer()
 
 void recording_thread(void *param)
 {
-    pros::lcd::set_text(2, "THREAD STARTED");
+    #if DEBUG == 1
+    lcd::set_text(2, "THREAD STARTED");
+    #endif
 
     uint32_t captureDelay = 15; // 15ms per capture
 
@@ -102,16 +104,18 @@ void recording_thread(void *param)
     uint32_t prev_millis = beginFrame + captureDelay * 67;
 
     uint32_t now = millis();
-
+#if DEBUG == 1
     lcd::print(3, "%lu controller captures", recording_buffer.size());
     lcd::print(4, "%lu captures flushed to disk %lu frames ago", captureCount, now - beginFrame);
-
+#endif
     while (true)
     {
         if (stop_system) break;
 
         // Save the data to the recording buffer
+        #if DEBUG == 1
         lcd::print(3, "%lu controller captures", recording_buffer.size());
+        #endif
         capture_controller();
 
         now = millis();
@@ -119,7 +123,9 @@ void recording_thread(void *param)
         if (now > prev_millis)
         {
             // Flush the data to the file system to save RAM
+            #if DEBUG == 1
             lcd::print(4, "%lu captures flushed to disk %lu frames ago", captureCount, now - beginFrame);
+            #endif
 
             if (now >= beginFrame + max_recording_time * 1000)
                 break;
@@ -155,7 +161,9 @@ virtual_controller *begin_playback(string filename)
     // ensure we have something to read the data from
     if (!usd::is_installed())
     {
+        #if DEBUG == 1
         lcd::set_text(1, "PLAYBACK FAILED: NO USD");
+        #endif
         return nullptr;
     }
 
@@ -237,7 +245,9 @@ void stop_playback()
         return;
     }
     stop_system = true;
+    #if DEBUG == 1
     lcd::set_text(7, "END");
+    #endif
     // zero out everything so the robot isn't moving to infinity
     playback_controller->Axis1.position_value = 0;
     playback_controller->Axis2.position_value = 0;

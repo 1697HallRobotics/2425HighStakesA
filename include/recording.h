@@ -13,6 +13,8 @@ using namespace chrono;
 using namespace pros;
 using namespace pros::c;
 
+#define DEBUG 0
+
 typedef struct //Controller data
 {
     signed char axis[4];
