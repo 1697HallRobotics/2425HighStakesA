@@ -31,10 +31,6 @@ while (1)                                                                       
 		leftMotors.brake();                                                             	\
 	}                                                                                   	\
 \
-	if (CONTROLLER.get_digital_new_press(DIGITAL_R1))                                   	\
-		liftMotor.move_absolute(400, 75);                                               	\
-	else if (CONTROLLER.get_digital_new_press(DIGITAL_R2))                              	\
-		liftMotor.move_absolute(5, 50);                                                 	\
 \
 	if (CONTROLLER.get_digital_new_press(DIGITAL_A))                                    	\
 		TRIGGER_MACRO(ScoreWallGoal);                                                   	\
@@ -42,11 +38,8 @@ while (1)                                                                       
 	if (CONTROLLER.get_digital_new_press(DIGITAL_B))                                    	\
 		clampPneumatics.toggle();                                                       	\
 \
-	if (CONTROLLER.get_digital_new_press(DIGITAL_L1)) {                                 	\
-		intakeSpinning = 0;                                    								\
-	}                                                                                   	\
 \
-	if (CONTROLLER.get_digital_new_press(DIGITAL_L2)) {                                 	\
+	if (CONTROLLER.get_digital_new_press(DIGITAL_R1)) {		                               	\
 		if (intakeSpinning) intakeSpinning = 0;                                    			\
 		else intakeSpinning = 1;                                                        	\
 	}                                                                                   	\
@@ -57,7 +50,7 @@ while (1)                                                                       
 		intakeMotor.brake();                                                           		\
 	}																						\
 \
-	task_delay(1);                                                                      	\
+	task_delay(5);                                                                      	\
 \
 	lv_timer_handler();                                                                 	\
 }																							\
@@ -135,6 +128,7 @@ void initialize()
 	dvd_img = lv_img_create(lv_scr_act());
 	lv_img_set_src(dvd_img, &frame_00);
 	lv_obj_align(dvd_img, LV_ALIGN_CENTER, 0, 0);
+	lv_img_set_angle(dvd_img, 180);
 	lv_obj_set_size(dvd_img, 480, 240);
 	lv_img_set_zoom(dvd_img, 256);
 	

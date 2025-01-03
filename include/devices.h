@@ -16,13 +16,13 @@ const float deadzone = 10.1f;
 // The motor's base speed, as a multiplier.
 const float speed = 0.65f;
 // negative = reversed motor
-const int8_t leftBackPort     = -16;
-const int8_t leftFrontPort    = -10;
-const int8_t rightBackPort    = -3;
-const int8_t rightFrontPort   = -11;
+const int8_t rightFrontPort   = -1;
+const int8_t leftFrontPort    = -2;
+const int8_t leftBackPort     = -9;
+const int8_t rightBackPort    = -10;
 // every port past here is outdated since we have none of these
-const int8_t liftPort         = 0;
 const int8_t intakePort       = 14;
+const int8_t liftPort         = 0;
 const int8_t liftIntakePort   = 0; // TODO
 const int8_t rampPort         = 0; // TODO
 const int8_t clampPort        = 16;
