@@ -14,14 +14,14 @@ Controller controller(E_CONTROLLER_MASTER);
 const float deadzone = 10.1f;
 
 // The motor's base speed, as a multiplier.
-const float speed = 0.65f;
+const float speed = 1.0f;
 // negative = reversed motor
-const int8_t rightFrontPort   = -1;
-const int8_t leftFrontPort    = -2;
+const int8_t rightFrontPort   = -13;
+const int8_t rightBackPort    = -2;
+const int8_t leftFrontPort    = -3;
 const int8_t leftBackPort     = -9;
-const int8_t rightBackPort    = -10;
 // every port past here is outdated since we have none of these
-const int8_t intakePort       = 14;
+const int8_t intakePort       = -12;
 const int8_t liftPort         = 0;
 const int8_t liftIntakePort   = 0; // TODO
 const int8_t rampPort         = 0; // TODO
@@ -41,6 +41,6 @@ Motor liftIntakeMotor (liftIntakePort);
 MotorGroup leftMotors ({leftBackPort, leftFrontPort});
 MotorGroup rightMotors({rightBackPort, rightFrontPort});
 
-adi::Pneumatics clampPneumatics = adi::Pneumatics('a', false);
+adi::Pneumatics clampPneumatics = adi::Pneumatics('h', true);
 
 #endif

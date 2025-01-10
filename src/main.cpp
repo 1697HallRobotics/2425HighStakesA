@@ -22,8 +22,8 @@ while (1)                                                                       
 \
 	if (turnPower != 0 || forwardPower != 0)                                            	\
 	{                                                                                   	\
-		rightMotors.move((turnPower - forwardPower) * speed);                           	\
-		leftMotors.move((turnPower + forwardPower) * speed);                            	\
+		rightMotors.move((turnPower - forwardPower) * speed);      				           	\
+		leftMotors.move((turnPower + forwardPower) * speed);     			              	\
 	}                                                                                   	\
 	else                                                                                	\
 	{                                                                                   	\
@@ -31,13 +31,11 @@ while (1)                                                                       
 		leftMotors.brake();                                                             	\
 	}                                                                                   	\
 \
-\
 	if (CONTROLLER.get_digital_new_press(DIGITAL_A))                                    	\
 		TRIGGER_MACRO(ScoreWallGoal);                                                   	\
 \
 	if (CONTROLLER.get_digital_new_press(DIGITAL_B))                                    	\
 		clampPneumatics.toggle();                                                       	\
-\
 \
 	if (CONTROLLER.get_digital_new_press(DIGITAL_R1)) {		                               	\
 		if (intakeSpinning) intakeSpinning = 0;                                    			\
@@ -45,7 +43,7 @@ while (1)                                                                       
 	}                                                                                   	\
 \
 	if (intakeSpinning) {																	\
-		intakeMotor.move(-58);                                     							\
+		intakeMotor.move((CONTROLLER.get_digital(DIGITAL_R2) ? -127 : 127));                                     							\
 	} else {																				\
 		intakeMotor.brake();                                                           		\
 	}																						\
@@ -90,13 +88,10 @@ void update_dvd(lv_timer_t* timer)
 			dvdTimer = 0;
 			lv_style_set_img_recolor(dvd_img->styles->style, LV_COLOR_MAKE(255, 255, 255));
 		}
-		
-		
 	}
 }
 
 void update_cat(lv_timer_t* timer) {
-	printf("%llu\n", dvdTimer);
 	lv_img_set_src(dvd_img, &(cat_gif[(dvdTimer) % 36]));
 	dvdTimer++;
 	lv_obj_invalidate(dvd_img);
@@ -125,16 +120,18 @@ void initialize()
 	lv_obj_add_style(dvd_img, &style1, LV_STATE_DEFAULT);
 	*/
 
+	// init and set up image
 	dvd_img = lv_img_create(lv_scr_act());
 	lv_img_set_src(dvd_img, &frame_00);
 	lv_obj_align(dvd_img, LV_ALIGN_CENTER, 0, 0);
 	lv_img_set_angle(dvd_img, 180);
 	lv_obj_set_size(dvd_img, 480, 240);
 	lv_img_set_zoom(dvd_img, 256);
-	
 
+	// create timer for gif frame swapping
 	lv_timer_create(update_cat, 90, NULL);
 
+	// set up motors
 	rightMotors.set_brake_mode_all(MotorBrake::brake);
 	leftMotors.set_brake_mode_all(MotorBrake::brake);
 
