@@ -95,7 +95,7 @@ void recording_thread(void *param)
     lcd::set_text(2, "THREAD STARTED");
     #endif
 
-    uint32_t captureDelay = 15; // 15ms per capture
+    uint32_t captureDelay = 5; // 5ms per capture
 
     uint32_t beginFrame = millis();
 
@@ -196,7 +196,7 @@ virtual_controller *begin_playback(string filename)
 
 void playback_thread(void *param)
 {
-    uint32_t playbackDelay = 15; // 15ms per capture
+    uint32_t playbackDelay = 5; // 15ms per capture
     uint32_t beginFrame = millis();
 
     while (1)
@@ -228,7 +228,7 @@ void playback_thread(void *param)
         playback_controller->ButtonR1.pressing_value = (signed int)data.digital[10];
         playback_controller->ButtonR2.pressing_value = (signed int)data.digital[11];
 
-        // wait 15ms, accounting for execution delay (although if that is >1-2ms we might have a problem)
+        // wait 5ms, accounting for execution delay (although if that is >1-2ms we might have a problem)
         task_delay_until(&beginFrame, playbackDelay);
 
         // update starting frame for delay

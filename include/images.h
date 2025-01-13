@@ -3,11 +3,11 @@
 
 #include "liblvgl/lvgl.h"
 
+#define GIFID 1
+
 extern lv_img_dsc_t cat_gif[36];
 
 extern void init_catgif();
-
-extern const uint8_t frame_00_map[];
 
 LV_IMG_DECLARE(frame_00);
 LV_IMG_DECLARE(frame_01);

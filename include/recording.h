@@ -36,6 +36,9 @@ public:
     bool pressing();
 };
 
+/**
+ * @brief A class that simulates the controller. Provides facades for both VEXCode and PROS bindings, so they can be easily swapped out 
+ */
 class virtual_controller
 {
 public:

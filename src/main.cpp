@@ -9,6 +9,11 @@ int16_t xVelo = 0;
 int16_t yVelo = 0;
 uint64_t dvdTimer = 0;
 
+#define RECORD "fidelityTest"
+#define RLENGTH 15
+#define SKILLS "skills1"
+#define OVERRIDE_PLAYBACK "fidelityTest"
+
 #define DRIVE()                                                                             \
 uint8_t intakeSpinning = 0;                                                                 \
 while (1)                                                                                   \
@@ -37,13 +42,8 @@ while (1)                                                                       
 	if (CONTROLLER.get_digital_new_press(DIGITAL_B))                                    	\
 		clampPneumatics.toggle();                                                       	\
 \
-	if (CONTROLLER.get_digital_new_press(DIGITAL_R1)) {		                               	\
-		if (intakeSpinning) intakeSpinning = 0;                                    			\
-		else intakeSpinning = 1;                                                        	\
-	}                                                                                   	\
-\
-	if (intakeSpinning) {																	\
-		intakeMotor.move((CONTROLLER.get_digital(DIGITAL_R2) ? -127 : 127));                                     							\
+	if (CONTROLLER.get_digital(DIGITAL_R1)) {																	\
+		intakeMotor.move((CONTROLLER.get_digital(DIGITAL_R2) ? -127 : 127));                \
 	} else {																				\
 		intakeMotor.brake();                                                           		\
 	}																						\
@@ -92,10 +92,12 @@ void update_dvd(lv_timer_t* timer)
 }
 
 void update_cat(lv_timer_t* timer) {
-	lv_img_set_src(dvd_img, &(cat_gif[(dvdTimer) % 36]));
+	lv_img_set_src(dvd_img, &(cat_gif[(dvdTimer) % 24]));
 	dvdTimer++;
 	lv_obj_invalidate(dvd_img);
 }
+
+char* autonFileName;
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -107,7 +109,7 @@ void initialize()
 {
 	init_catgif();
 
-/*
+	/*
 	xVelo = rand() % 4;
 	yVelo = rand() % 4;
 	dvd_img = lv_img_create(lv_scr_act());
@@ -119,17 +121,52 @@ void initialize()
 	lv_style_set_img_recolor(&style1, lv_color_white());
 	lv_obj_add_style(dvd_img, &style1, LV_STATE_DEFAULT);
 	*/
+#ifndef SKILLS
+#ifndef RECORD
+	lv_obj_t* label = lv_label_create(lv_scr_act());
+	lv_label_set_text(label, "Blue\nLeft side or Right side\nRed");
+	lv_style_t style1;
+	lv_style_init(&style1);
+	lv_style_set_text_font(&style1, &lv_font_montserrat_24);
+	lv_style_set_text_align(&style1, LV_TEXT_ALIGN_CENTER);
+	lv_obj_add_style(label, &style1, LV_STATE_DEFAULT);
+	lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+	
+	bool touched = false;
+	bool touchCount = screen::touch_status().release_count;
+
+	while (!touched)
+	{
+		if (screen::touch_status().release_count > touchCount) {
+			touched = true;
+			if (screen::touch_status().y >= 240) 
+				(screen::touch_status().x <= 120) ? (autonFileName = "auton_L_B") : (autonFileName = "auton_R_B");
+			else
+				(screen::touch_status().x <= 120) ? (autonFileName = "auton_L_R") : (autonFileName = "auton_R_R");
+
+			lv_label_set_text(label, autonFileName);
+			delay(1000);
+		}
+		delay(5);
+	}
+	
+	lv_obj_del(label);
+#endif
+#endif
+	#ifdef SKILLS
+	autonFileName = SKILLS;
+	#endif
 
 	// init and set up image
 	dvd_img = lv_img_create(lv_scr_act());
 	lv_img_set_src(dvd_img, &frame_00);
 	lv_obj_align(dvd_img, LV_ALIGN_CENTER, 0, 0);
-	lv_img_set_angle(dvd_img, 180);
-	lv_obj_set_size(dvd_img, 480, 240);
-	lv_img_set_zoom(dvd_img, 256);
+	//lv_img_set_angle(dvd_img, 180);
+	//lv_obj_set_size(dvd_img, 240, 240);
+	lv_img_set_zoom(dvd_img, 512);
 
 	// create timer for gif frame swapping
-	lv_timer_create(update_cat, 90, NULL);
+	lv_timer_create(update_cat, 120, NULL);
 
 	// set up motors
 	rightMotors.set_brake_mode_all(MotorBrake::brake);
@@ -192,8 +229,11 @@ void autonomous_LAMEANDSTINKY()
 
 void autonomous_cool()
 {
-	virtual_controller* vcontroller = begin_playback("20241019-1");
-	//virtual_controller* vcontroller = begin_playback("judgelivedemo");
+	#ifndef OVERRIDE_PLAYBACK
+	virtual_controller* vcontroller = begin_playback(autonFileName);
+	#else
+	virtual_controller* vcontroller = begin_playback(OVERRIDE_PLAYBACK);
+	#endif
 	if (vcontroller == nullptr)
 		return;
 
@@ -268,8 +308,9 @@ void MACRO_IMPLEMENTATION(ScoreWallGoal)
  */
 void opcontrol()
 {
-
-	//start_recording("judgelivedemo", 10);
+#ifdef RECORD
+	start_recording(RECORD, RLENGTH);
+#endif
 	// this is used for autonomous to easily swap out the controller with the virtual controller
 	#define CONTROLLER controller
 

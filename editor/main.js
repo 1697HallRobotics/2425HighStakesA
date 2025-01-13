@@ -172,7 +172,7 @@ function update_ui(idx) {
     $("#digital_r2")   .toggleClass("pressing", playback_buffer[idx].digital[11] == 1);
     
     $("#joycon_right").css("transform", "translate(" + (playback_buffer[idx].axis[0] * 2.5) + "px," + (playback_buffer[idx].axis[1] * -2.5) + "px)");
-    $("#joycon_left") .css("transform", "translate(" + (playback_buffer[idx].axis[2] * 2.5) + "px," + (playback_buffer[idx].axis[3] * -2.5) + "px)");
+    $("#joycon_left") .css("transform", "translate(" + (playback_buffer[idx].axis[3] * 2.5) + "px," + (playback_buffer[idx].axis[2] * -2.5) + "px)");
 
     $("#undostack").text(JSON.stringify(undo_stack));
     $("#redostack").text(JSON.stringify(redo_stack));
