@@ -9,10 +9,10 @@ int16_t xVelo = 0;
 int16_t yVelo = 0;
 uint64_t dvdTimer = 0;
 
-#define RECORD "fidelityTest"
-#define RLENGTH 15
+//#define RECORD "auton_R_B"
+//#define RLENGTH 15
 #define SKILLS "skills1"
-#define OVERRIDE_PLAYBACK "fidelityTest"
+//#define OVERRIDE_PLAYBACK "fidelityTest"
 
 #define DRIVE()                                                                             \
 uint8_t intakeSpinning = 0;                                                                 \
@@ -48,6 +48,8 @@ while (1)                                                                       
 		intakeMotor.brake();                                                           		\
 	}																						\
 \
+	if (!clampPneumatics.is_extended()) controller.print(0, 0, "CLAMPED!!     "); 		\
+	else controller.print(0, 0, "locked out asf");									\
 	task_delay(5);                                                                      	\
 \
 	lv_timer_handler();                                                                 	\
@@ -121,8 +123,8 @@ void initialize()
 	lv_style_set_img_recolor(&style1, lv_color_white());
 	lv_obj_add_style(dvd_img, &style1, LV_STATE_DEFAULT);
 	*/
-#ifndef SKILLS
 #ifndef RECORD
+#ifndef SKILLS
 	lv_obj_t* label = lv_label_create(lv_scr_act());
 	lv_label_set_text(label, "Blue\nLeft side or Right side\nRed");
 	lv_style_t style1;
@@ -133,11 +135,11 @@ void initialize()
 	lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 	
 	bool touched = false;
-	bool touchCount = screen::touch_status().release_count;
+	bool touchCount = screen::touch_status().press_count;
 
 	while (!touched)
 	{
-		if (screen::touch_status().release_count > touchCount) {
+		if (screen::touch_status().press_count > touchCount) {
 			touched = true;
 			if (screen::touch_status().y >= 240) 
 				(screen::touch_status().x <= 120) ? (autonFileName = "auton_L_B") : (autonFileName = "auton_R_B");
@@ -181,6 +183,9 @@ void initialize()
 	rightMotors.set_zero_position_all(0);
 	leftMotors.set_zero_position_all(0);
 	intakeMotor.set_zero_position(0);
+
+	clampPneumatics.set_value(1);
+	//poop 
 }
 
 /**
