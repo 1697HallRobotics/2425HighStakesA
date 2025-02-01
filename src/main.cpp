@@ -8,11 +8,10 @@
 int16_t xVelo = 0;
 int16_t yVelo = 0;
 uint64_t dvdTimer = 0;
-
-#define RECORD "auton_L_R"
-#define RLENGTH 15
-//#define SKILLS "skills1"
-#define OVERRIDE_PLAYBACK "fidelityTest"
+//#define RECORD "auton_R_B"
+//#define RLENGTH 15
+#define SKILLS "auton_skills1"
+//#define OVERRIDE_PLAYBACK "auton_R_B"
 
 #define DRIVE()                                                                             \
 uint8_t intakeSpinning = 0;                                                                 \
@@ -156,12 +155,12 @@ void initialize()
 	{
 		if (screen::touch_status().press_count > touchCount) {
 			touched = true;
-			if (screen::touch_status().y >= 240) 
-				(screen::touch_status().x <= 120) ? (autonFileName = "auton_L_B") : (autonFileName = "auton_R_B");
-			else
-				(screen::touch_status().x <= 120) ? (autonFileName = "auton_L_R") : (autonFileName = "auton_R_R");
-
-			lv_label_set_text(label, autonFileName);
+			if (screen::touch_status().y <= 120) {
+				autonFileName = (screen::touch_status().x <= 240 ? (char*)"auton_L_B" : (char*)"auton_R_B");
+			} else {
+				autonFileName = (screen::touch_status().x <= 240 ? (char*)"auton_L_R" : (char*)"auton_R_R");
+			}
+			lv_label_set_text(label, (string(autonFileName) + to_string(screen::touch_status().y)).c_str());
 			delay(1000);
 		}
 		delay(5);
@@ -249,9 +248,12 @@ void autonomous_cool()
  */
 void autonomous() 
 {
-	autonomous_cool();
-	//autonomous_LAMEANDSTINKY();
-	
+	//autonomous_cool();
+	leftMotors.move(127);
+	rightMotors.move(-127);
+	delay(500);
+	leftMotors.brake();
+	rightMotors.brake();
 }
 
 /**

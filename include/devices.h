@@ -24,8 +24,6 @@ const int8_t intakePort       = -10;
 const int8_t sweeperPort      = 9;
 const int8_t gpsPort          = 3;
 
-const int8_t distanceSensorPort = 8;
-
 Motor leftBackMotor   (leftBackPort);
 Motor leftFrontMotor  (leftFrontPort);
 Motor rightBackMotor  (rightBackPort);

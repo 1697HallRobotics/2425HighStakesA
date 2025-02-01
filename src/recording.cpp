@@ -5,7 +5,7 @@ void start_recording(const string filename, int length, Gps* gps)
     // check if the SD card is installed
     if (!usd::is_installed())
     {
-        lcd::set_text(1, "REC FAILED: NO USD (ENXIO)");
+        screen_print(E_TEXT_MEDIUM, 7, "REC FAILED: NO USD (ENXIO)");
         return;
     }
 
@@ -14,7 +14,7 @@ void start_recording(const string filename, int length, Gps* gps)
     // in a word, readability
     if (!controller_is_connected(E_CONTROLLER_MASTER))
     {
-        lcd::set_text(1, "REC FAILED: NO CONTROLLER (ENXIO)");
+        screen_print(E_TEXT_MEDIUM, 7, "REC FAILED: NO CONTROLLER (ENXIO)");
         return;
     }
 
@@ -25,7 +25,7 @@ void start_recording(const string filename, int length, Gps* gps)
     // if this errors, god save you
     if (!recording_output_stream.is_open() || recording_output_stream.bad())
     {
-        lcd::set_text(1, "REC FAILED: BAD OFSTREAM (EIO)");
+        screen_print(E_TEXT_MEDIUM, 7, "REC FAILED: BAD OFSTREAM (EIO)");
         return;
     }
 
@@ -35,6 +35,7 @@ void start_recording(const string filename, int length, Gps* gps)
 
     recording_output_stream << (unsigned char)length;
 
+    /*
     if (gps == nullptr) {
         recording_output_stream << 0.0f;
         recording_output_stream << 0.0f;
@@ -42,6 +43,7 @@ void start_recording(const string filename, int length, Gps* gps)
         recording_output_stream << gps->get_position_x();
         recording_output_stream << gps->get_position_y();
     }
+    */
 
     stop_system = false;
 
@@ -183,10 +185,20 @@ virtual_controller *begin_playback(string filename)
     ifstream stream;
     stream.open("/usd/" + filename + ".vrf", ios::binary);
 
+    if (!stream.is_open() || stream.bad())
+    {
+        screen_print(E_TEXT_MEDIUM, 7, "PLAYBACK FAILED: BAD IFSTREAM (EIO)");
+        return nullptr;
+    }
+
     // read the length of the recording
     // currently unused, but we need to advance the stream by one at least
     char *lengthData = new char[1];
     stream.read(lengthData, sizeof(char));
+    /*
+    char* positionData = new char[2*sizeof(float)];
+    stream.read(positionData, 2*sizeof(float));
+    */
     unsigned char recording_length = lengthData[0];
 
     // read the rest of the file 16 bytes at a time

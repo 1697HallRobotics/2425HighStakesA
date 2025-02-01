@@ -185,7 +185,7 @@ function update_ui(idx) {
 function begin_playback(start_pos = 0) {
     if (isRunning) return;
     if (playback_cursor == playback_buffer.length - 1) start_pos = 0;
-    fpsInterval = 15;
+    fpsInterval = 5;
     playback_cursor = start_pos;
     then = window.performance.now();
     startTime = then;
