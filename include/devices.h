@@ -20,12 +20,9 @@ const int8_t rightFrontPort   = -6;
 const int8_t rightBackPort    = -4;
 const int8_t leftFrontPort    = -12;
 const int8_t leftBackPort     = -11;
-// every port past here is outdated since we have none of these
 const int8_t intakePort       = -10;
-const int8_t liftPort         = 0;
-const int8_t liftIntakePort   = 0; // TODO
-const int8_t rampPort         = 0; // TODO
-const int8_t clampPort        = 16;
+const int8_t sweeperPort      = 9;
+const int8_t gpsPort          = 3;
 
 const int8_t distanceSensorPort = 8;
 
@@ -33,11 +30,9 @@ Motor leftBackMotor   (leftBackPort);
 Motor leftFrontMotor  (leftFrontPort);
 Motor rightBackMotor  (rightBackPort);
 Motor rightFrontMotor (rightFrontPort);
-Motor liftMotor       (liftPort);
-Motor rampMotor       (rampPort);
 Motor intakeMotor     (intakePort);
-Motor liftIntakeMotor (liftIntakePort);
-
+Motor sweeperMotor    (sweeperPort);
+Gps   gps             (gpsPort);
 MotorGroup leftMotors ({leftBackPort, leftFrontPort});
 MotorGroup rightMotors({rightBackPort, rightFrontPort});
 

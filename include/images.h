@@ -3,7 +3,7 @@
 
 #include "liblvgl/lvgl.h"
 
-#define GIFID 1
+#define GIFID 2
 
 extern lv_img_dsc_t cat_gif[36];
 

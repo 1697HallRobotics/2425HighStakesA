@@ -1,6 +1,6 @@
 #include "recording.h"
 
-void start_recording(const string &filename, int length)
+void start_recording(const string filename, int length, Gps* gps)
 {
     // check if the SD card is installed
     if (!usd::is_installed())
@@ -34,6 +34,14 @@ void start_recording(const string &filename, int length)
     recording_buffer = vector<ControllerData>();
 
     recording_output_stream << (unsigned char)length;
+
+    if (gps == nullptr) {
+        recording_output_stream << 0.0f;
+        recording_output_stream << 0.0f;
+    } else {
+        recording_output_stream << gps->get_position_x();
+        recording_output_stream << gps->get_position_y();
+    }
 
     stop_system = false;
 
@@ -151,6 +159,11 @@ void stop_recording()
     stop_system = true;
     flush_recording_buffer();
     recording_output_stream.close();
+}
+
+PositionData get_position(string filename)
+{
+
 }
 
 virtual_controller *begin_playback(string filename)

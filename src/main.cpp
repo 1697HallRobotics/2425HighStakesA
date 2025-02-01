@@ -16,8 +16,15 @@ uint64_t dvdTimer = 0;
 
 #define DRIVE()                                                                             \
 uint8_t intakeSpinning = 0;                                                                 \
+uint8_t sweeperState = 1;																	\
+sweeperMotor.move_absolute(215, 40);														\
 while (1)                                                                                   \
 {                                                                                           \
+	screen::print(TEXT_MEDIUM, 1, "X: %f", gps.get_position_x());							\
+	screen::print(TEXT_MEDIUM, 2, "Y: %f", gps.get_position_y());							\
+	screen::print(TEXT_MEDIUM, 3, "heaindg: %f", gps.get_heading());						\
+	screen::print(TEXT_MEDIUM, 4, "Temp: BL(%lf) BR(%lf)", leftBackMotor.get_temperature(), rightBackMotor.get_temperature());\
+	screen::print(TEXT_MEDIUM, 5, "Temp: FL(%lf) FR(%lf)", leftFrontMotor.get_temperature(), rightFrontMotor.get_temperature());\
 	float turnPower = CONTROLLER.get_analog(ANALOG_RIGHT_X);                                \
 	float forwardPower = CONTROLLER.get_analog(ANALOG_LEFT_Y);                              \
 	if (fabsf(turnPower) <= deadzone)                                                       \
@@ -36,20 +43,28 @@ while (1)                                                                       
 		leftMotors.brake();                                                             	\
 	}                                                                                   	\
 \
-	if (CONTROLLER.get_digital_new_press(DIGITAL_A))                                    	\
-		TRIGGER_MACRO(ScoreWallGoal);                                                   	\
-\
 	if (CONTROLLER.get_digital_new_press(DIGITAL_B))                                    	\
 		clampPneumatics.toggle();                                                       	\
 \
-	if (CONTROLLER.get_digital(DIGITAL_R1)) {																	\
+	if (CONTROLLER.get_digital(DIGITAL_R1)) {												\
 		intakeMotor.move((CONTROLLER.get_digital(DIGITAL_R2) ? -127 : 127));                \
 	} else {																				\
 		intakeMotor.brake();                                                           		\
 	}																						\
 \
-	if (!clampPneumatics.is_extended()) controller.print(0, 0, "CLAMPED!!     "); 		\
-	else controller.print(0, 0, "locked out asf");									\
+	if (CONTROLLER.get_digital_new_press(DIGITAL_L1))										\
+	{																						\
+		if (sweeperState) {																	\
+			sweeperMotor.move_absolute(447, 40);											\
+			sweeperState = 0;																\
+		} else {																			\
+			sweeperMotor.move_absolute(215, 40);											\
+			sweeperState = 1;																\
+		}																					\
+	}																						\
+\
+	if (!clampPneumatics.is_extended()) controller.print(0, 0, "CLAMPED!!     "); 			\
+	else controller.print(0, 0, "locked out asf");											\
 	task_delay(5);                                                                      	\
 \
 	lv_timer_handler();                                                                 	\
@@ -109,7 +124,7 @@ char* autonFileName;
  */
 void initialize()
 {
-	init_catgif();
+	//init_catgif();
 
 	/*
 	xVelo = rand() % 4;
@@ -157,35 +172,32 @@ void initialize()
 #endif
 	#ifdef SKILLS
 	autonFileName = SKILLS;
+
+
 	#endif
 
 	// init and set up image
-	dvd_img = lv_img_create(lv_scr_act());
-	lv_img_set_src(dvd_img, &frame_00);
-	lv_obj_align(dvd_img, LV_ALIGN_CENTER, 0, 0);
+	//dvd_img = lv_img_create(lv_scr_act());
+	//lv_img_set_src(dvd_img, &frame_00);
+	//lv_obj_align(dvd_img, LV_ALIGN_CENTER, 0, 0);
 	//lv_img_set_angle(dvd_img, 180);
 	//lv_obj_set_size(dvd_img, 240, 240);
-	lv_img_set_zoom(dvd_img, 512);
+	//lv_img_set_zoom(dvd_img, 512);
 
 	// create timer for gif frame swapping
-	lv_timer_create(update_cat, 120, NULL);
+	//lv_timer_create(update_cat, 120, NULL);
 
 	// set up motors
 	rightMotors.set_brake_mode_all(MotorBrake::brake);
 	leftMotors.set_brake_mode_all(MotorBrake::brake);
 
-	liftMotor.set_brake_mode(MotorBrake::hold);
 	intakeMotor.set_brake_mode(MotorBrake::hold);
-	rampMotor.set_brake_mode(MotorBrake::hold);
-
-	liftMotor.set_zero_position(0);
-	rampMotor.set_zero_position(0);
 	rightMotors.set_zero_position_all(0);
 	leftMotors.set_zero_position_all(0);
 	intakeMotor.set_zero_position(0);
+	sweeperMotor.set_zero_position(0);
 
 	clampPneumatics.set_value(1);
-	//poop 
 }
 
 /**
@@ -206,31 +218,6 @@ void disabled() {}
  */
  
 void competition_initialize() {}
-
-void autonomous_LAMEANDSTINKY()
-{
-	rightMotors.move(-127);
-	leftMotors.move(-127);
-
-	task_delay(500);
-
-	rightMotors.brake();
-	leftMotors.brake();
-
-	clampPneumatics.toggle();
-
-	task_delay(500);
-
-	rightMotors.move(127);
-	leftMotors.move(127);
-
-	task_delay(500);
-
-	rightMotors.brake();
-	leftMotors.brake();
-
-	clampPneumatics.toggle();
-}
 
 void autonomous_cool()
 {
@@ -265,37 +252,6 @@ void autonomous()
 	autonomous_cool();
 	//autonomous_LAMEANDSTINKY();
 	
-}
-
-void MACRO_IMPLEMENTATION(ScoreWallGoal)
-{
-	if (MACRO_RUNNING(MACRO_WALLGOAL)) return;
-	FLAG_MACRO_ON(MACRO_WALLGOAL);
-
-	liftMotor.move_absolute(5, 50);
-
-	// code here
-	intakeMotor.move(127);
-
-	task_delay(4000);
-
-	intakeMotor.brake();
-
-	liftMotor.move_absolute(400, 75);
-
-	task_delay(500);
-
-	intakeMotor.move(-127);
-
-	task_delay(4000);
-
-	intakeMotor.brake();
-
-	task_delay(500);
-
-	liftMotor.move_absolute(5, 50);
-
-	FLAG_MACRO_OFF(MACRO_WALLGOAL);
 }
 
 /**

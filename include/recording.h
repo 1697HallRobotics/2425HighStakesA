@@ -22,6 +22,12 @@ typedef struct //Controller data
     signed char digital[12];
 } ControllerData;
 
+typedef struct
+{
+    float positionX;
+    float positionY;
+} PositionData;
+
 class virtual_controller_axis
 {
 public:
@@ -72,9 +78,10 @@ static bool stop_system = false;
 /**
  * @brief Start the recording.
  * @param filename The name of the file. Automatically appends a .vrf extension to the file.
- * @param length The length of the recording, in seconds. 
+ * @param length The length of the recording, in seconds.
+ * @param gps An options GPS to pass in, in order to record the positional data to be retrieved.
  */
-void start_recording(const string& filename, int length);
+void start_recording(const string filename, int length, Gps* gps);
 /**
  * @brief The recording thread of the recording system. Typically used by the `start_recording` method.
  * @param param An argument required by the PROS RTOS task. Unused, just pass `nullptr` into it.
