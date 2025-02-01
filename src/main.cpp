@@ -9,10 +9,10 @@ int16_t xVelo = 0;
 int16_t yVelo = 0;
 uint64_t dvdTimer = 0;
 
-//#define RECORD "auton_R_B"
-//#define RLENGTH 15
-#define SKILLS "skills1"
-//#define OVERRIDE_PLAYBACK "fidelityTest"
+#define RECORD "auton_L_R"
+#define RLENGTH 15
+//#define SKILLS "skills1"
+#define OVERRIDE_PLAYBACK "fidelityTest"
 
 #define DRIVE()                                                                             \
 uint8_t intakeSpinning = 0;                                                                 \
@@ -270,7 +270,7 @@ void autonomous()
 void opcontrol()
 {
 #ifdef RECORD
-	start_recording(RECORD, RLENGTH);
+	start_recording(RECORD, RLENGTH, nullptr);
 #endif
 	// this is used for autonomous to easily swap out the controller with the virtual controller
 	#define CONTROLLER controller
