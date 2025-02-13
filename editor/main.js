@@ -17,6 +17,10 @@ let fps = 0, fpsInterval = 0, startTime = 0, now = 0, then = 0, elapsed = 0, rec
 let coords = {x: -50, y: -50};
 let alpha = {val: 0};
 
+function bytes_to_double(byte_array) {
+    return new Float64Array(byte_array)[0];
+}
+
 function duplicate_action() {
     let amount = Number(document.getElementById("duplication_captures").value);
     let recent_action = undo_stack[undo_stack.length - 1];
@@ -139,6 +143,7 @@ function stop_playback() {
 function update_ui(idx) {
     $("#progress").val(idx.toString());
     $("#timeline").val(idx.toString());
+    $("#timestamp").text((idx * (5 / 1000)) + " / " + (playback_buffer.length * (5/1000)) + "s");
 
     $("#axis1").val(playback_buffer[idx].axis[0]);
     $("#axis2").val(playback_buffer[idx].axis[1]);
@@ -212,13 +217,14 @@ function tickPlayback() {
     elapsed = now - then;
             
     // if enough time has elapsed, draw the next frame
-    if (elapsed > fpsInterval) {
+    while (elapsed > fpsInterval) {
         // Get ready for next frame by setting then=now
         then = now - (elapsed % fpsInterval);
 
         // update stuff
         playback_cursor++;
         update_ui(playback_cursor);
+        elapsed -= fpsInterval;
     };
 };
 
@@ -271,6 +277,10 @@ window.onload = function () {
             let arrayBuffer = this.result, array = new Int8Array(arrayBuffer);
             let cursor = 0;
             let length = array[cursor++];
+            // float64 - double (8 bytes to read)
+            let posX = bytes_to_double([array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++]]);
+            let posY = bytes_to_double([array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++]]);
+            let heading = bytes_to_double([array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++], array[cursor++]]);
             recordingLength = length;
             while (cursor < array.byteLength) {
                 playback_buffer.push({
@@ -289,6 +299,7 @@ window.onload = function () {
             $("#timeline").attr("max", playback_buffer.length - 1);
             $("#progress").val("0");
             $("#max").text("/" + (playback_buffer.length - 1).toString());
+            $("#timestamp").text("0.00 / " + recordingLength + "s");
             document.getElementById("timeline").oninput = function (event) {
                 playback_cursor = Number(event.target.value);
                 update_ui(playback_cursor);

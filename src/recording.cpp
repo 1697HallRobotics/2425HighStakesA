@@ -1,6 +1,6 @@
 #include "recording.h"
 
-void start_recording(const string filename, int length, Gps* gps)
+void start_recording(const string filename, uint8_t length, Gps* gps)
 {
     // check if the SD card is installed
     if (!usd::is_installed())
@@ -33,18 +33,22 @@ void start_recording(const string filename, int length, Gps* gps)
 
     recording_buffer = vector<ControllerData>();
 
-    recording_output_stream << (unsigned char)length;
+    recording_output_stream.write((const char*)&length, sizeof(uint8_t));
 
-    /*
+    double gps_x, gps_y, gps_heading;
     if (gps == nullptr) {
-        recording_output_stream << 0.0f;
-        recording_output_stream << 0.0f;
+        gps_x = 0.0;
+        gps_y = 0.0;
+        gps_heading = 0.0;
     } else {
-        recording_output_stream << gps->get_position_x();
-        recording_output_stream << gps->get_position_y();
+        gps_x = gps->get_position_x();
+        gps_y = gps->get_position_y();
+        gps_heading = gps->get_heading();
     }
-    */
-
+    recording_output_stream.write((const char *)&gps_x, sizeof(double));
+    recording_output_stream.write((const char *)&gps_y, sizeof(double));
+    recording_output_stream.write((const char *)&gps_heading, sizeof(double));
+    
     stop_system = false;
 
     rtos::Task recording_task(recording_thread, nullptr, TASK_PRIORITY_MAX);
@@ -85,12 +89,12 @@ void flush_recording_buffer()
         ControllerData capture = recording_buffer[i];
         for (size_t i = 0; i < 4; i++)
         {
-            recording_output_stream << (char)capture.axis[i];
+            recording_output_stream.write((const char*)&capture.axis[i], sizeof(char));
         }
 
         for (size_t i = 0; i < 12; i++)
         {
-            recording_output_stream << (char)capture.digital[i];
+            recording_output_stream.write((const char*)&capture.digital[i], sizeof(char));
         }
     }
 
@@ -101,50 +105,39 @@ void flush_recording_buffer()
 
 void recording_thread(void *param)
 {
-    #if DEBUG == 1
-    lcd::set_text(2, "THREAD STARTED");
-    #endif
-
-    uint32_t captureDelay = 5; // 5ms per capture
+    uint8_t captureDelay = 5; // 5ms per capture
 
     uint32_t beginFrame = millis();
 
     uint32_t captureCount = 0;
 
-    uint32_t prev_millis = beginFrame + captureDelay * 67;
+    uint16_t delayMult = (uint16_t)(1000 / captureDelay);
 
-    uint32_t now = millis();
-#if DEBUG == 1
-    lcd::print(3, "%lu controller captures", recording_buffer.size());
-    lcd::print(4, "%lu captures flushed to disk %lu frames ago", captureCount, now - beginFrame);
-#endif
+    uint32_t prev_millis = beginFrame + captureDelay * delayMult;
+
+    uint32_t now = beginFrame;
     while (true)
     {
         if (stop_system) break;
 
         // Save the data to the recording buffer
-        #if DEBUG == 1
-        lcd::print(3, "%lu controller captures", recording_buffer.size());
-        #endif
         capture_controller();
 
         now = millis();
         ++captureCount;
+        // Break out of the loop if the elapsed time has passed
+        if (now >= beginFrame + max_recording_time * 1000)
+            break;
+        
         if (now > prev_millis)
         {
             // Flush the data to the file system to save RAM
-            #if DEBUG == 1
-            lcd::print(4, "%lu captures flushed to disk %lu frames ago", captureCount, now - beginFrame);
-            #endif
-
-            if (now >= beginFrame + max_recording_time * 1000)
-                break;
             flush_recording_buffer();
             captureCount = 0;
-            prev_millis = now + captureDelay * 67;
+            prev_millis = now + captureDelay * delayMult;
         }
 
-        // This part keeps the frame rate.
+        // This part keeps the capture rate.
         task_delay_until(&beginFrame, captureDelay);
         beginFrame = millis();
     }
@@ -165,20 +158,43 @@ void stop_recording()
 
 PositionData get_position(string filename)
 {
-
-}
-
-virtual_controller *begin_playback(string filename)
-{
-    // allocate the virtual controller
-    playback_controller = new virtual_controller();
+    printf("getting positional data");
 
     // ensure we have something to read the data from
     if (!usd::is_installed())
     {
-        #if DEBUG == 1
-        lcd::set_text(1, "PLAYBACK FAILED: NO USD");
-        #endif
+        printf("PLAYBACK FAILED: NO SD (ENXIO)");
+    }
+
+    ifstream stream;
+    stream.open("/usd/" + filename + ".vrf", ios::binary);
+
+    if (!stream.is_open() || stream.bad())
+    {
+        printf("PLAYBACK FAILED: BAD IFSTREAM (EIO)");
+    }
+
+    // read the length of the recording
+    // currently unused, but we need to advance the stream by one at least
+    char lengthData;
+    stream.read(&lengthData, sizeof(char));
+    
+    double posX, posY, heading;
+    stream.read((char*)&posX, sizeof(double));
+    stream.read((char*)&posY, sizeof(double));
+    stream.read((char*)&heading, sizeof(double));
+
+    stream.close();
+
+    return (PositionData){posX, posY, heading};
+}
+
+virtual_controller *begin_playback(string filename)
+{
+    // ensure we have something to read the data from
+    if (!usd::is_installed())
+    {
+        screen_print(E_TEXT_MEDIUM, 7, "PLAYBACK FAILED: NO SD (ENXIO)");
         return nullptr;
     }
 
@@ -191,21 +207,26 @@ virtual_controller *begin_playback(string filename)
         return nullptr;
     }
 
+    // allocate the virtual controller
+    playback_controller = new virtual_controller();
+
     // read the length of the recording
     // currently unused, but we need to advance the stream by one at least
-    char *lengthData = new char[1];
-    stream.read(lengthData, sizeof(char));
-    /*
-    char* positionData = new char[2*sizeof(float)];
-    stream.read(positionData, 2*sizeof(float));
-    */
-    unsigned char recording_length = lengthData[0];
+    char lengthData;
+    stream.read(&lengthData, sizeof(char));
+    
+    double posX, posY, heading;
+    stream.read((char*)&posX, sizeof(double));
+    stream.read((char*)&posY, sizeof(double));
+    stream.read((char*)&heading, sizeof(double));
+    
+    unsigned char recording_length = lengthData;
 
     // read the rest of the file 16 bytes at a time
     while (!stream.eof())
     {
         char *raw = new char[16];
-        stream.read(raw, 16);
+        stream.read(raw, 16*sizeof(char));
         ControllerData data = {
             {(signed char)raw[0], (signed char)raw[1], (signed char)raw[2], (signed char)raw[3]},
             {(signed char)raw[4], (signed char)raw[5], (signed char)raw[6], (signed char)raw[7], (signed char)raw[8], (signed char)raw[9], (signed char)raw[10], (signed char)raw[11], (signed char)raw[12], (signed char)raw[13], (signed char)raw[14], (signed char)raw[15]}};
@@ -221,7 +242,7 @@ virtual_controller *begin_playback(string filename)
 
 void playback_thread(void *param)
 {
-    uint32_t playbackDelay = 5; // 15ms per capture
+    uint8_t playbackDelay = 5; // 5ms per capture
     uint32_t beginFrame = millis();
 
     while (1)

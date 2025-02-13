@@ -24,8 +24,9 @@ typedef struct //Controller data
 
 typedef struct
 {
-    float positionX;
-    float positionY;
+    double positionX;
+    double positionY;
+    double heading;
 } PositionData;
 
 class virtual_controller_axis
@@ -81,7 +82,7 @@ static bool stop_system = false;
  * @param length The length of the recording, in seconds.
  * @param gps An options GPS to pass in, in order to record the positional data to be retrieved.
  */
-void start_recording(const string filename, int length, Gps* gps);
+void start_recording(const string filename, uint8_t length, Gps* gps);
 /**
  * @brief The recording thread of the recording system. Typically used by the `start_recording` method.
  * @param param An argument required by the PROS RTOS task. Unused, just pass `nullptr` into it.
@@ -92,6 +93,12 @@ void recording_thread(void* param);
  * @brief Immediately end the recording and clean it up.
  */
 void stop_recording();
+
+/**
+ * @brief Get the position data of a recording system.
+ * @return A struct containing the 
+ */
+PositionData get_position(string filename);
 
 /**
  * @brief Begin the playback.

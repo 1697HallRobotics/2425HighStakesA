@@ -8,10 +8,11 @@
 int16_t xVelo = 0;
 int16_t yVelo = 0;
 uint64_t dvdTimer = 0;
-//#define RECORD "auton_R_B"
-//#define RLENGTH 15
-#define SKILLS "auton_skills1"
-//#define OVERRIDE_PLAYBACK "auton_R_B"
+
+#define RECORD "auton_L_R"
+#define RLENGTH 15
+//#define SKILLS "gpsTest"
+#define OVERRIDE_PLAYBACK "auton_L_R"
 
 #define DRIVE()                                                                             \
 uint8_t intakeSpinning = 0;                                                                 \
@@ -54,7 +55,7 @@ while (1)                                                                       
 	if (CONTROLLER.get_digital_new_press(DIGITAL_L1))										\
 	{																						\
 		if (sweeperState) {																	\
-			sweeperMotor.move_absolute(447, 40);											\
+			sweeperMotor.move_absolute(438, 40);											\
 			sweeperState = 0;																\
 		} else {																			\
 			sweeperMotor.move_absolute(215, 40);											\
@@ -94,6 +95,7 @@ void update_dvd(lv_timer_t* timer)
 	lv_obj_set_x(dvd_img, lv_obj_get_x(dvd_img) + xVelo);
 	lv_obj_set_y(dvd_img, lv_obj_get_y(dvd_img) + yVelo);
 	
+	
 	if (battery::get_capacity() < 15) {
 		if (++dvdTimer > 33)
 		{
@@ -124,7 +126,8 @@ char* autonFileName;
 void initialize()
 {
 	//init_catgif();
-
+	printf("init");
+	std::cout << "test";
 	/*
 	xVelo = rand() % 4;
 	yVelo = rand() % 4;
@@ -167,14 +170,43 @@ void initialize()
 	}
 	
 	lv_obj_del(label);
-#endif
-#endif
-	#ifdef SKILLS
+#else
 	autonFileName = SKILLS;
 
+	PositionData posData = get_position(string(autonFileName));
 
-	#endif
+	bool clicked = false;
 
+	lv_obj_t* continueButton = lv_btn_create(lv_scr_act());
+	lv_obj_t* continueBtnLabel = lv_label_create(continueButton);
+	lv_label_set_text(continueBtnLabel, "Continue");
+	lv_obj_align(continueButton, LV_ALIGN_BOTTOM_RIGHT, -20, -20);
+
+	lv_obj_t* gpsLabel = lv_label_create(lv_scr_act());
+	lv_label_set_text(gpsLabel, "GPS Recording Calibration:\nPosition X diff: N/A\n Position Y diff: N/A\nHeading diff: N/A");
+	lv_obj_align(gpsLabel, LV_ALIGN_LEFT_MID, 20, 0);
+
+	lv_obj_add_event_cb(continueButton, [](lv_event_t * event) {
+		(*((bool*)event->user_data)) = true;
+	}, LV_EVENT_CLICKED, &clicked);
+
+	while (!clicked)
+	{
+		lv_label_set_text_fmt(
+			gpsLabel, 
+			"GPS Recording Calibration:\nPosition X diff: %g\n Position Y diff: %g\nHeading diff: %g",
+			gps.get_position_x(), 
+			gps.get_position_y(), 
+			gps.get_heading()
+			);
+		delay(5);
+	}
+
+	lv_obj_del(continueButton);
+	lv_obj_del(gpsLabel);
+	
+#endif
+#endif
 	// init and set up image
 	//dvd_img = lv_img_create(lv_scr_act());
 	//lv_img_set_src(dvd_img, &frame_00);
@@ -248,12 +280,7 @@ void autonomous_cool()
  */
 void autonomous() 
 {
-	//autonomous_cool();
-	leftMotors.move(127);
-	rightMotors.move(-127);
-	delay(500);
-	leftMotors.brake();
-	rightMotors.brake();
+	autonomous_cool();
 }
 
 /**
@@ -272,7 +299,7 @@ void autonomous()
 void opcontrol()
 {
 #ifdef RECORD
-	start_recording(RECORD, RLENGTH, nullptr);
+	start_recording(RECORD, RLENGTH, &gps);
 #endif
 	// this is used for autonomous to easily swap out the controller with the virtual controller
 	#define CONTROLLER controller
