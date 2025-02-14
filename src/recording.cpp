@@ -198,9 +198,11 @@ virtual_controller *begin_playback(string filename)
         return nullptr;
     }
 
+    // create an input stream to read in the file
     ifstream stream;
     stream.open("/usd/" + filename + ".vrf", ios::binary);
 
+    // ensure the stream opened correctly
     if (!stream.is_open() || stream.bad())
     {
         screen_print(E_TEXT_MEDIUM, 7, "PLAYBACK FAILED: BAD IFSTREAM (EIO)");
@@ -214,7 +216,8 @@ virtual_controller *begin_playback(string filename)
     // currently unused, but we need to advance the stream by one at least
     char lengthData;
     stream.read(&lengthData, sizeof(char));
-    
+
+    // read GPS position data taken at the beginning of the recording
     double posX, posY, heading;
     stream.read((char*)&posX, sizeof(double));
     stream.read((char*)&posY, sizeof(double));
@@ -225,11 +228,17 @@ virtual_controller *begin_playback(string filename)
     // read the rest of the file 16 bytes at a time
     while (!stream.eof())
     {
+        // allocate 16 bytes for the data
         char *raw = new char[16];
+        // read 16 bytes of data into the array from the input stream
         stream.read(raw, 16*sizeof(char));
+        // convert raw data into the ControllerData struct
         ControllerData data = {
             {(signed char)raw[0], (signed char)raw[1], (signed char)raw[2], (signed char)raw[3]},
-            {(signed char)raw[4], (signed char)raw[5], (signed char)raw[6], (signed char)raw[7], (signed char)raw[8], (signed char)raw[9], (signed char)raw[10], (signed char)raw[11], (signed char)raw[12], (signed char)raw[13], (signed char)raw[14], (signed char)raw[15]}};
+            {(signed char)raw[4], (signed char)raw[5], (signed char)raw[6], (signed char)raw[7], (signed char)raw[8], (signed char)raw[9], (signed char)raw[10], (signed char)raw[11], (signed char)raw[12], (signed char)raw[13], (signed char)raw[14], (signed char)raw[15]}
+        };
+
+        // put the structured data into the playback buffer to be used by the playback thread
         playback_buffer.push_back(data);
     }
 
