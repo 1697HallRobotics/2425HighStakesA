@@ -126,8 +126,6 @@ char* autonFileName;
 void initialize()
 {
 	//init_catgif();
-	printf("init");
-	std::cout << "test";
 	/*
 	xVelo = rand() % 4;
 	yVelo = rand() % 4;
