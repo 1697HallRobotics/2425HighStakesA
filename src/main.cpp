@@ -9,10 +9,11 @@ int16_t xVelo = 0;
 int16_t yVelo = 0;
 uint64_t dvdTimer = 0;
 
-#define RECORD "auton_L_R"
-#define RLENGTH 15
+//#define RECORD "auton_L_R"
+//#define RLENGTH 15
 //#define SKILLS "gpsTest"
-#define OVERRIDE_PLAYBACK "auton_L_R"
+#define OVERRIDE_PLAYBACK "auton_R_R"
+#define SKIP
 
 #define DRIVE()                                                                             \
 uint8_t intakeSpinning = 0;                                                                 \
@@ -142,6 +143,7 @@ void initialize()
 	*/
 #ifndef RECORD
 #ifndef SKILLS
+#ifndef SKIP
 	lv_obj_t* label = lv_label_create(lv_scr_act());
 	lv_label_set_text(label, "Blue\nLeft side or Right side\nRed");
 	lv_style_t style1;
@@ -170,6 +172,7 @@ void initialize()
 	}
 	
 	lv_obj_del(label);
+#endif
 #else
 	autonFileName = SKILLS;
 
