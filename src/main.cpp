@@ -9,11 +9,12 @@ int16_t xVelo = 0;
 int16_t yVelo = 0;
 uint64_t dvdTimer = 0;
 
-//#define RECORD "auton_L_R"
+// file naming scheme: auton_[color]_[side]
+//#define RECORD "auton_red_left"
 //#define RLENGTH 15
-//#define SKILLS "gpsTest"
-#define OVERRIDE_PLAYBACK "auton_R_R"
-#define SKIP
+#define SKILLS "auton_red_left"
+#define OVERRIDE_PLAYBACK "auton_red_left"
+//#define SKIP
 
 #define DRIVE()                                                                             \
 uint8_t intakeSpinning = 0;                                                                 \
@@ -127,18 +128,7 @@ char* autonFileName;
 void initialize()
 {
 	//init_catgif();
-	/*
-	xVelo = rand() % 4;
-	yVelo = rand() % 4;
-	dvd_img = lv_img_create(lv_scr_act());
-	lv_img_set_src(dvd_img, &dvd_logo);
 
-	lv_style_t style1;
-	lv_style_init(&style1);
-	lv_style_set_img_recolor_opa(&style1, LV_OPA_COVER);
-	lv_style_set_img_recolor(&style1, lv_color_white());
-	lv_obj_add_style(dvd_img, &style1, LV_STATE_DEFAULT);
-	*/
 #ifndef RECORD
 #ifndef SKILLS
 #ifndef SKIP
@@ -159,12 +149,12 @@ void initialize()
 		if (screen::touch_status().press_count > touchCount) {
 			touched = true;
 			if (screen::touch_status().y <= 120) {
-				autonFileName = (screen::touch_status().x <= 240 ? (char*)"auton_L_B" : (char*)"auton_R_B");
+				autonFileName = (screen::touch_status().x <= 240 ? (char*)"auton_blue_left" : (char*)"auton_blue_right");
 			} else {
-				autonFileName = (screen::touch_status().x <= 240 ? (char*)"auton_L_R" : (char*)"auton_R_R");
+				autonFileName = (screen::touch_status().x <= 240 ? (char*)"auton_red_left" : (char*)"auton_red_right");
 			}
 			lv_label_set_text(label, (string(autonFileName) + to_string(screen::touch_status().y)).c_str());
-			delay(1000);
+			delay(500);
 		}
 		delay(5);
 	}
@@ -193,13 +183,16 @@ void initialize()
 
 	while (!clicked)
 	{
-		lv_label_set_text_fmt(
-			gpsLabel, 
-			"GPS Recording Calibration:\nPosition X diff: %g\n Position Y diff: %g\nHeading diff: %g",
-			gps.get_position_x(), 
-			gps.get_position_y(), 
-			gps.get_heading()
-			);
+		char buf[128];
+
+		sprintf(
+			buf, 
+			"GPS Recording Calibration:\nPosition X diff: %lf\n Position Y diff: %lf\nHeading diff: %lf", 
+			gps.get_position_x() - posData.positionX, 
+			gps.get_position_y() - posData.positionY, 
+			gps.get_heading() - posData.heading
+		);
+		lv_label_set_text(gpsLabel, buf);
 		delay(5);
 	}
 
@@ -208,16 +201,6 @@ void initialize()
 	
 #endif
 #endif
-	// init and set up image
-	//dvd_img = lv_img_create(lv_scr_act());
-	//lv_img_set_src(dvd_img, &frame_00);
-	//lv_obj_align(dvd_img, LV_ALIGN_CENTER, 0, 0);
-	//lv_img_set_angle(dvd_img, 180);
-	//lv_obj_set_size(dvd_img, 240, 240);
-	//lv_img_set_zoom(dvd_img, 512);
-
-	// create timer for gif frame swapping
-	//lv_timer_create(update_cat, 120, NULL);
 
 	// set up motors
 	rightMotors.set_brake_mode_all(MotorBrake::brake);
