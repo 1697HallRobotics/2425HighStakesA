@@ -21,13 +21,13 @@ uint8_t sweeperState = 1;																	\
 sweeperMotor.move_absolute(215, 40);														\
 while (1)                                                                                   \
 {                                                                                           \
-	screen::print(TEXT_MEDIUM, 1, "X: %f", gps.get_position_x());							\
-	screen::print(TEXT_MEDIUM, 2, "Y: %f", gps.get_position_y());							\
-	screen::print(TEXT_MEDIUM, 3, "heaindg: %f", gps.get_heading());						\
-	screen::print(TEXT_MEDIUM, 4, "Temp: BL(%lf) BR(%lf)", leftBackMotor.get_temperature(), rightBackMotor.get_temperature());\
-	screen::print(TEXT_MEDIUM, 5, "Temp: FL(%lf) FR(%lf)", leftFrontMotor.get_temperature(), rightFrontMotor.get_temperature());\
 	float turnPower = CONTROLLER.get_analog(ANALOG_RIGHT_X);                                \
 	float forwardPower = CONTROLLER.get_analog(ANALOG_LEFT_Y);                              \
+	screen::print(TEXT_MEDIUM, 1, "X: %f", turnPower);					\
+	screen::print(TEXT_MEDIUM, 2, "Y: %f", forwardPower);					\
+	screen::print(TEXT_MEDIUM, 3, "heading: %f", gps.get_heading());			\
+	screen::print(TEXT_MEDIUM, 4, "Temp: BL(%lf) BR(%lf)", leftBackMotor.get_temperature(), rightBackMotor.get_temperature());\
+	screen::print(TEXT_MEDIUM, 5, "Temp: FL(%lf) FR(%lf)", leftFrontMotor.get_temperature(), rightFrontMotor.get_temperature());\
 	if (fabsf(turnPower) <= deadzone)                                                       \
 		turnPower = 0;                                                                      \
 	if (fabsf(forwardPower) <= deadzone)                                                    \
@@ -127,8 +127,6 @@ char* autonFileName;
 void initialize()
 {
 	//init_catgif();
-	printf("init");
-	std::cout << "test";
 	/*
 	xVelo = rand() % 4;
 	yVelo = rand() % 4;
