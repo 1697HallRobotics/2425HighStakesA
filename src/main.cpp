@@ -10,11 +10,11 @@ int16_t yVelo = 0;
 uint64_t dvdTimer = 0;
 
 // file naming scheme: auton_[color]_[side]
-//#define RECORD "auton_red_left"
+//#define RECORD "auton_blue_left"
 //#define RLENGTH 15
-#define SKILLS "auton_red_left"
+//#define SKILLS "auton_red_left"
 #define OVERRIDE_PLAYBACK "auton_red_left"
-//#define SKIP
+#define SKIP
 
 #define DRIVE()                                                                             \
 uint8_t intakeSpinning = 0;                                                                 \
@@ -57,7 +57,7 @@ while (1)                                                                       
 	if (CONTROLLER.get_digital_new_press(DIGITAL_L1))										\
 	{																						\
 		if (sweeperState) {																	\
-			sweeperMotor.move_absolute(438, 40);											\
+			sweeperMotor.move_absolute(440, 40);											\
 			sweeperState = 0;																\
 		} else {																			\
 			sweeperMotor.move_absolute(215, 40);											\
